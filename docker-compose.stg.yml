@@ -1,0 +1,211 @@
+## docker-compse.stg.yml
+## Used with Jenkinsfile for staging environment
+## Deploy:
+## - front-end with nginx
+## - back-end with wordpress
+## - mariadb database
+## - wordpress client to initialize and configure website
+## 
+## Persistent storage for all containers
+## One network stg-net with access
+## All variables managed by jenkinsfile
+version: '3.8'
+name: "stg-wp"
+services:
+  stg_db:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    container_name: "${ENVIRONMENT_NAME}-db"
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_MON_USER=${MYSQL_MON_USER}
+      - MYSQL_MON_PASSWORD=${MYSQL_MON_PASSWORD}
+    volumes:
+      - ${STG_DB_PATH}:/var/lib/mysql
+      - ${STG_DB_BACKUP_PATH}:/mnt/backup
+    entrypoint:
+    # You can use init.sql file and map to entrypoint folder ./db/init.sql:/docker-entrypoint-initdb.d but user/pwd in file is hardcoded
+    # use this line with variables with sql query to create user/pwd.
+      sh -c "echo \"CREATE USER IF NOT EXISTS '${MYSQL_MON_USER}'@'%' IDENTIFIED BY '${MYSQL_MON_PASSWORD}'; ALTER USER '${MYSQL_MON_USER}' WITH MAX_USER_CONNECTIONS 3; GRANT PROCESS, REPLICATION CLIENT ON *.* TO '${MYSQL_MON_USER}'@'%'; GRANT SELECT ON performance_schema.* TO '${MYSQL_MON_USER}'@'%'; GRANT SLAVE MONITOR ON *.* TO '${MYSQL_MON_USER}'; FLUSH PRIVILEGES;\"> /docker-entrypoint-initdb.d/init.sql; /usr/local/bin/docker-entrypoint.sh --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci" 
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - stg-net
+      - mon-net
+
+  stg_wordpress:
+    build:
+      context: ./wp
+      dockerfile: Dockerfile
+    container_name: "${ENVIRONMENT_NAME}-wp"
+    restart: always
+    environment:
+      - WORDPRESS_DB_HOST=${STG_WORDPRESS_DB_HOST}
+      - WORDPRESS_DB_USER=${WORDPRESS_DB_USER}
+      - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD}
+      - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME}
+    volumes:
+      - ${STG_WP_PATH}:/var/www/html
+    depends_on:
+      - stg_db
+    networks:
+      - stg-net
+
+  stg_nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: "${ENVIRONMENT_NAME}-fe"
+    restart: always
+    ports:
+      - '${STG_NGINX_PORT}:${NGINX_PORT}'
+    depends_on:
+      - stg_db
+      - stg_wordpress
+    volumes:
+      - ${STG_WP_PATH}:/var/www/html
+    environment:
+      - NGINX_HOST=${STG_WORDPRESS_WEBSITE_URL_WITHOUT_HTTP}
+      - NGINX_PORT=${NGINX_PORT}
+      - WORDPRESS_HOST=${STG_WORDPRESS_HOST}
+    networks:
+      - stg-net
+      - mon-net
+
+  stg_mysqld-exporter:
+    # Forced to this version, with newer version doesn't work and can't connect with mariadb
+    image: prom/mysqld-exporter:v0.14.0
+    container_name: "${ENVIRONMENT_NAME}_mysqld-exporter"
+    restart: unless-stopped
+    user: root
+    # Uncomment next line if you want access, port not required be published
+    # ports:
+    #   - "9104:9104"
+    environment:
+      # Uncomment other parameters to be added
+      - "DATA_SOURCE_NAME=${MYSQL_MON_USER}:${MYSQL_MON_PASSWORD}@(${STG_WORDPRESS_DB_HOST}:3306)/"
+      - "collect.auto_increment.columns=true"
+      - "collect.info_schema.userstats=true"
+      - "collect.info_schema.tablestats=true"
+      - "collect.info_schema.query_response_time=true"
+      - "collect.perf_schema.tableiowaits=true"
+      - "collect.perf_schema.tablelocks=true"
+      # - "collect.global_status=true"
+      # - "collect.global_variables=true"
+      # - "collect.slave_status=true"
+      # - "collect.binlog_size=true"
+      # - "collect.info_schema.innodb_metrics=true"
+      # - "collect.engine_tokudb_status=true"
+      # - "collect.info_schema.innodb_tablespaces=true"
+      # - "collect.info_schema.tables=true"
+      # - "collect.info_schema.tables.databases=true"
+      # - "collect.info_schema.processlist=true"
+      # - "collect.info_schema.processlist.min_time=true"
+      # - "collect.perf_schema.eventsstatements=true"
+      # - "collect.perf_schema.eventsstatements.limit=true"
+      # - "collect.perf_schema.eventsstatements.timelimit=true"
+      # - "collect.perf_schema.eventsstatements.digest_text_limit=true"
+      # - "collect.perf_schema.indexiowaits=true"
+      # - "collect.perf_schema.file_events=true"
+      # - "collect.perf_schema.eventswaits=true"
+    depends_on:
+      - stg_db
+    networks:
+      - mon-net
+
+  stg_nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: "${ENVIRONMENT_NAME}_nginx-exporter"
+    restart: unless-stopped
+    # Uncomment ports lines if you want access, port not required be published
+    # ports:
+    # - 9113:9113
+    command:
+    - '-nginx.scrape-uri'
+    - 'http://${STG_NGINX_HOST}:80/status'
+    # - '-web.listen-address'
+    # - '9113'
+    depends_on:
+      - stg_nginx
+    networks:
+    - mon-net
+
+  stg_wpcli:
+    build:
+      context: ./wp-cli
+      dockerfile: ./Dockerfile
+    container_name: "${ENVIRONMENT_NAME}wp-cli"
+    environment:
+      - EXTERNAL_NGINX_PORT=${STG_NGINX_PORT}
+      - NGINX_HOST=${STG_NGINX_HOST}
+      - NGINX_PORT=${NGINX_PORT}
+      - WORDPRESS_WEBSITE_URL=${STG_WORDPRESS_WEBSITE_URL}
+      - WORDPRESS_WEBSITE_URL_WITHOUT_HTTP=${STG_WORDPRESS_WEBSITE_URL_WITHOUT_HTTP}
+      - WORDPRESS_WEBSITE_POST_URL_STRUCTURE=${WORDPRESS_WEBSITE_POST_URL_STRUCTURE}
+      - WORDPRESS_WEBSITE_TITLE=${STG_WORDPRESS_WEBSITE_TITLE}
+      - WORDPRESS_ADMIN_USERNAME=${WORDPRESS_ADMIN_USERNAME}
+      - WORDPRESS_ADMIN_PASSWORD=${WORDPRESS_ADMIN_PASSWORD}
+      - WORDPRESS_ADMIN_EMAIL=${WORDPRESS_ADMIN_EMAIL}
+      - WORDPRESS_DB_HOST=${STG_WORDPRESS_DB_HOST}
+      - WORDPRESS_DB_USER=${WORDPRESS_DB_USER}
+      - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD}
+      - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME}
+    volumes:
+      - ${STG_WP_PATH}:/var/www/html
+    working_dir: /var/www/html
+    depends_on:
+      stg_db:
+        condition: service_healthy
+      stg_wordpress:
+        condition: service_started
+      stg_nginx:
+        condition: service_started
+    networks:
+      - stg-net
+
+  stg_testwpcli:
+    build:
+      context: ./wp-cli-test
+      dockerfile: ./Dockerfile
+    container_name: "${ENVIRONMENT_NAME}-wp-cli-test"
+    environment:
+      - WORDPRESS_DB_HOST=${STG_WORDPRESS_DB_HOST}
+      - WORDPRESS_DB_USER=${WORDPRESS_DB_USER}
+      - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD}
+      - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME}
+      - BRANCH_NAME=${ENVIRONMENT_NAME}
+      - BUILD_ID=${BUILD_ID}
+      - TAGS=${TAGS}
+      - CONTENT=${CONTENT}
+      - NUMBERPOST=${STG_NUMBERPOST}
+      - NUMBERCOMMENTS=${STG_NUMBERCOMMENTS}
+      - MAXWAITTIMECOMMENT=${MAXWAITTIMECOMMENT}
+      - MINWAITTIMECOMMENT=${MINWAITTIMECOMMENT}
+      - MAXWAITTIMEPOST=${MAXWAITTIMEPOST}
+      - MINWAITTIMEPOST=${MINWAITTIMEPOST}
+    volumes:
+      - ${STG_WP_PATH}:/var/www/html
+    working_dir: /var/www/html
+    depends_on:
+      stg_wpcli:
+        condition: service_started
+    networks:
+      - stg-net
+
+volumes:
+  stg_wp: {}
+  stg_db: {}
+  stg_db_backup: {}
+
+networks:
+  stg-net:
+    name: stg-net
+  mon-net:
+    name: mon-net

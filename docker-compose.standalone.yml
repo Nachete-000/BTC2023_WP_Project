@@ -1,0 +1,155 @@
+version: '3.8'
+name: "dev-wp"
+# name: "website-${ENVIRONMENT_NAME}-${BUILD_ID}"
+services:
+  dev_db:
+    build:
+      context: ./db
+      dockerfile: ./Dockerfile
+    container_name: "db-${ENVIRONMENT_NAME}-${BUILD_ID}"
+    env_file:
+      - .env
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_MON_USER=${MYSQL_MON_USER}
+      - MYSQL_MON_PASSWORD=${MYSQL_MON_PASSWORD}
+    entrypoint:
+    # You can use init.sql file and map to entrypoint folder ./db/init.sql:/docker-entrypoint-initdb.d but user/pwd in file is hardcoded
+    # use this line with variables with sql query to create user/pwd.
+      sh -c "echo \"CREATE USER IF NOT EXISTS '${MYSQL_MON_USER}'@'%' IDENTIFIED BY '${MYSQL_MON_PASSWORD}'; ALTER USER '${MYSQL_MON_USER}' WITH MAX_USER_CONNECTIONS 3; GRANT PROCESS, REPLICATION CLIENT ON *.* TO '${MYSQL_MON_USER}'@'%'; GRANT SELECT ON performance_schema.* TO '${MYSQL_MON_USER}'@'%'; GRANT SLAVE MONITOR ON *.* TO '${MYSQL_MON_USER}'; FLUSH PRIVILEGES;\"> /docker-entrypoint-initdb.d/init.sql; /usr/local/bin/docker-entrypoint.sh --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci" 
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - dev-net
+
+  dev_wordpress:
+    build:
+      context: ./wp
+      dockerfile: ./Dockerfile
+    container_name: "wp-${ENVIRONMENT_NAME}-${BUILD_ID}"
+    env_file:
+      - .env
+    restart: always
+    environment:
+      - WORDPRESS_DB_HOST=${DEV_WORDPRESS_DB_HOST}
+      - WORDPRESS_DB_USER=${WORDPRESS_DB_USER}
+      - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD}
+      - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME}
+    volumes:
+      - ${DEV_WP_PATH}:/var/www/html
+    depends_on:
+      - dev_db
+    networks:
+      - dev-net
+
+  dev_nginx:
+    build:
+      context: ./nginx
+      dockerfile: ./Dockerfile
+    container_name: "fe-${ENVIRONMENT_NAME}-${BUILD_ID}"
+    env_file:
+      - .env
+    restart: always
+    ports:
+      - '${DEV_NGINX_PORT}:${NGINX_PORT}'
+    depends_on:
+      - dev_db
+      - dev_wordpress
+    volumes:
+      - ${DEV_WP_PATH}:/var/www/html
+    environment:
+      - NGINX_HOST=${DEV_WORDPRESS_WEBSITE_URL_WITHOUT_HTTP}
+      - NGINX_PORT=${NGINX_PORT}
+      - WORDPRESS_HOST=${DEV_WORDPRESS_HOST}
+    networks:
+      - dev-net
+
+  dev_wpcli:
+    build:
+      context: ./wp-cli
+      dockerfile: ./Dockerfile
+    container_name: "wp-cli-${ENVIRONMENT_NAME}-${BUILD_ID}"
+    env_file:
+      - .env
+    environment:
+      - EXTERNAL_NGINX_PORT=${DEV_NGINX_PORT}
+      - NGINX_HOST=${DEV_NGINX_HOST}
+      - NGINX_PORT=${NGINX_PORT}
+      - WORDPRESS_WEBSITE_URL=${DEV_WORDPRESS_WEBSITE_URL}
+      - WORDPRESS_WEBSITE_URL_WITHOUT_HTTP=${DEV_WORDPRESS_WEBSITE_URL_WITHOUT_HTTP}
+      - WORDPRESS_WEBSITE_POST_URL_STRUCTURE=${WORDPRESS_WEBSITE_POST_URL_STRUCTURE}
+      - WORDPRESS_WEBSITE_TITLE=${DEV_WORDPRESS_WEBSITE_TITLE}
+      - WORDPRESS_ADMIN_USERNAME=${WORDPRESS_ADMIN_USERNAME}
+      - WORDPRESS_ADMIN_PASSWORD=${WORDPRESS_ADMIN_PASSWORD}
+      - WORDPRESS_ADMIN_EMAIL=${WORDPRESS_ADMIN_EMAIL}
+      - WORDPRESS_DB_HOST=${DEV_WORDPRESS_DB_HOST}
+      - WORDPRESS_DB_USER=${WORDPRESS_DB_USER}
+      - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD}
+      - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME}
+    volumes:
+      - ${DEV_WP_PATH}:/var/www/html
+    working_dir: /var/www/html
+    depends_on:
+      dev_db:
+        condition: service_healthy
+      dev_wordpress:
+        condition: service_started
+      dev_nginx:
+        condition: service_started
+    networks:
+      - dev-net
+
+  dev_testwpcli:
+    build:
+      context: ./wp-cli-test
+      dockerfile: ./Dockerfile
+    container_name: "wp-cli-test-${ENVIRONMENT_NAME}-${BUILD_ID}"
+    environment:
+      - WORDPRESS_DB_HOST=${DEV_WORDPRESS_DB_HOST}
+      - WORDPRESS_DB_USER=${WORDPRESS_DB_USER}
+      - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD}
+      - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME}
+      - BRANCH_NAME=${ENVIRONMENT_NAME}
+      - BUILD_ID=${BUILD_ID}
+      - TAGS=${TAGS}
+      - CONTENT=${CONTENT}
+      - NUMBERPOST=${DEV_NUMBERPOST}
+      - NUMBERCOMMENTS=${DEV_NUMBERCOMMENTS}
+      - MAXWAITTIMECOMMENT=${MAXWAITTIMECOMMENT}
+      - MINWAITTIMECOMMENT=${MINWAITTIMECOMMENT}
+      - MAXWAITTIMEPOST=${MAXWAITTIMEPOST}
+      - MINWAITTIMEPOST=${MINWAITTIMEPOST}
+    volumes:
+      - ${DEV_WP_PATH}:/var/www/html
+    working_dir: /var/www/html
+    depends_on:
+      dev_db:
+        condition: service_healthy
+      dev_wordpress:
+        condition: service_started
+      dev_nginx:
+        condition: service_started
+      dev_wpcli:
+        condition: service_started
+    networks:
+      - dev-net
+
+volumes:
+  dev_wp:
+    driver_opts:
+      type: "tmpfs"
+      device: "tmpfs"
+  dev_db:
+    driver_opts:
+      type: "tmpfs"
+      device: "tmpfs"
+
+networks:
+  dev-net:
+    name: dev-net

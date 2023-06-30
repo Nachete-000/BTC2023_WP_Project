@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  db:
+    image: ${DOCKER_REGISTRY_HOST}:${DOCKER_REGISTRY_PORT}/${DOCKER_REG_IMAGE_DB}
+    restart: always
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: stop-first
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_MON_USER=${MYSQL_MON_USER}
+      - MYSQL_MON_PASSWORD=${MYSQL_MON_PASSWORD}
+    volumes:
+      - ${PRD_DB_PATH}:/var/lib/mysql
+      - ${PRD_DB_BACKUP_PATH}:/mnt/backup
+    entrypoint:
+      sh -c "echo \"CREATE USER IF NOT EXISTS '${MYSQL_MON_USER}'@'%' IDENTIFIED BY '${MYSQL_MON_PASSWORD}'; ALTER USER '${MYSQL_MON_USER}' WITH MAX_USER_CONNECTIONS 3; GRANT PROCESS, REPLICATION CLIENT ON *.* TO '${MYSQL_MON_USER}'@'%'; GRANT SELECT ON performance_schema.* TO '${MYSQL_MON_USER}'@'%'; GRANT SLAVE MONITOR ON *.* TO '${MYSQL_MON_USER}'; FLUSH PRIVILEGES;\"> /docker-entrypoint-initdb.d/init.sql; /usr/local/bin/docker-entrypoint.sh --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci" 
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+      timeout: 20s
+      retries: 10      
+
+  wordpress:
+    image: ${DOCKER_REGISTRY_HOST}:${DOCKER_REGISTRY_PORT}/${DOCKER_REG_IMAGE_WP}
+    restart: always
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+    # ports:
+    #   - "9000:9000"
+    environment:
+      - WORDPRESS_DB_HOST=${PRD_WORDPRESS_DB_HOST}
+      - WORDPRESS_DB_USER=${WORDPRESS_DB_USER}
+      - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD}
+      - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME}
+    volumes:
+      - ${PRD_WP_PATH}:/var/www/html
+    depends_on:
+      - prddb
+
+  nginx:
+    image: ${DOCKER_REGISTRY_HOST}:${DOCKER_REGISTRY_PORT}/${DOCKER_REG_IMAGE_FE}
+    restart: always
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+    ports:
+      - '${PRD_NGINX_PORT}:${NGINX_PORT}'
+    depends_on:
+      - prddb
+      - prdwordpress
+    volumes:
+      - ${PRD_WP_PATH}:/var/www/html
+    environment:
+      - NGINX_HOST=${PRD_WORDPRESS_WEBSITE_URL_WITHOUT_HTTP}
+      - NGINX_PORT=${NGINX_PORT}
+      - WORDPRESS_HOST=${PRD_WORDPRESS_HOST}
+
+  wpcli:
+    image: ${DOCKER_REGISTRY_HOST}:${DOCKER_REGISTRY_PORT}/${DOCKER_REG_IMAGE_WPCLI}
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: stop-first
+    restart: on-failure
+    environment:
+      - EXTERNAL_NGINX_PORT=${PRD_NGINX_PORT}
+      - NGINX_HOST=${PRD_NGINX_HOST}
+      - NGINX_PORT=${NGINX_PORT}
+      - WORDPRESS_WEBSITE_URL=${PRD_WORDPRESS_WEBSITE_URL}
+      - WORDPRESS_WEBSITE_URL_WITHOUT_HTTP=${PRD_WORDPRESS_WEBSITE_URL_WITHOUT_HTTP}
+      - WORDPRESS_WEBSITE_POST_URL_STRUCTURE=${WORDPRESS_WEBSITE_POST_URL_STRUCTURE}
+      - WORDPRESS_WEBSITE_TITLE=${PRD_WORDPRESS_WEBSITE_TITLE}
+      - WORDPRESS_ADMIN_USERNAME=${WORDPRESS_ADMIN_USERNAME}
+      - WORDPRESS_ADMIN_PASSWORD=${WORDPRESS_ADMIN_PASSWORD}
+      - WORDPRESS_ADMIN_EMAIL=${WORDPRESS_ADMIN_EMAIL}
+      - WORDPRESS_DB_HOST=${PRD_WORDPRESS_DB_HOST}
+      - WORDPRESS_DB_USER=${WORDPRESS_DB_USER}
+      - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD}
+      - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME}
+    volumes:
+      - ${PRD_WP_PATH}:/var/www/html
+    working_dir: /var/www/html
+    depends_on:
+      - db
+      - wordpress
+      - nginx
+
+volumes:
+  wp:
+  db:
+  db_backup:

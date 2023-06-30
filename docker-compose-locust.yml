@@ -1,0 +1,24 @@
+version: '3'
+name: "wp-locust-${ENVIRONMENT_NAME}"
+services:
+  master:
+    container_name: "wp-locust-${ENVIRONMENT_NAME}-master"
+    build:
+      context: ./locust
+      dockerfile: Dockerfile
+    # image: locustio/locust:master
+    ports:
+      - "8089:8089"
+    # volumes:
+    #   - ./locust:/mnt/locust
+    command: -f /mnt/locust/${LOCUST_FILE} --master -H http://${NGINX_HOST}:${NGINX_PORT} --headless -u ${LOCUST_USERS} -r ${LOCUST_SPAWN_RATE} --run-time ${LOCUST_RUNTIME} --only-summary
+    tty: true
+      
+  worker:
+    build:
+      context: ./locust
+      dockerfile: Dockerfile
+    # image: locustio/locust:master
+    # volumes:
+    #   - ./locust:/mnt/locust
+    command: -f /mnt/locust/${LOCUST_FILE} --worker --master-host master

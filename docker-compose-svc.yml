@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  jenkins:
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
+    container_name: "Jenkins-svc"
+    restart: always
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - ./_storage/jenkins:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - svc-net  
+
+  registry:
+    image: registry
+    container_name: "local-registry-svc"
+    restart: always
+    volumes:
+      - registry:/var/lib/registry
+    ports:
+      - 5000:5000
+    networks:
+      - svc-net    
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    # image: google/cadvisor        # Replaced image, doesn't work in linux
+    container_name: "cadvisor"
+    restart: unless-stopped
+    # privileged: true
+    devices:
+    - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    # ports:
+    #   - 8081:8080
+    networks:
+      - mon-net     
+    
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: "prometheus"
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      # - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      # - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - 9090:9090
+    depends_on:
+      - cadvisor
+    networks:
+      - mon-net 
+
+  grafana:
+    image: grafana/grafana
+    container_name: "grafana"
+    restart: unless-stopped
+    env_file: ./.env
+    ports:
+      - 3000:3000
+    volumes:
+      - ./grafana/prometheus_ds.yml:/etc/grafana/provisioning/datasources/prometheus.yml                # Prometheus data source
+      - ./grafana/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml                      # Grafana Dashboard File
+      - ./grafana/dashboard-wp.json:/etc/grafana/provisioning/dashboards/dashboard-wp.json              # Dashboards
+      - ./grafana/dashboard-docker.json:/etc/grafana/provisioning/dashboards/dashboard-docker.json
+      - ./grafana/dashboard-mariadb.json:/etc/grafana/provisioning/dashboards/dashboard-mariadb.json
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_pwd
+      GF_USERS_ALLOW_SIGN_UP: ${GF_USERS_ALLOW_SIGN_UP}
+    depends_on:
+      - prometheus
+    networks:
+      - mon-net   
+    secrets:
+      - grafana_admin_pwd
+
+volumes:
+  registry: {}
+  prometheus: {}
+  grafana: {}
+
+networks:
+  mon-net:
+    name: mon-net
+  svc-net:
+    name: svc-net
+
+secrets:
+  grafana_admin_pwd:
+    file: ./grafana/grafana_admin_pwd
+

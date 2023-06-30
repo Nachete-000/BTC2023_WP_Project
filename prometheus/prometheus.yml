@@ -1,0 +1,79 @@
+# my global config
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+  external_labels:
+    monitor: 'wp-site'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+# scrape_configs:
+#   # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+#   - job_name: "prometheus"
+#     scrape_interval: 5s
+#     # metrics_path defaults to '/metrics'
+#     # scheme defaults to 'http'.
+#     static_configs:
+#       - targets: ["localhost:9090"]
+
+scrape_configs:
+# Direct connections (without exporter)
+
+  - job_name: cadvisor
+    scrape_interval: 5s
+    static_configs:
+    - targets:
+      - cadvisor:8080                 # Use docker internal Network
+
+  - job_name: 'prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['prometheus:9090']  # Use docker internal Network
+
+  - job_name: 'prd_wordpress'
+    scrape_interval: 5s
+    metrics_path: '/wp-json/metrics'
+    static_configs:
+      - targets: ['wp.local:80']         # Use docker published port
+
+  - job_name: 'stg_wordpress'
+    scrape_interval: 5s
+    metrics_path: '/wp-json/metrics'
+    static_configs:
+      - targets: ['stgwp.local:4080']         # Use docker published Network
+
+# Connections with prd exporters
+  - job_name: 'prd_nginx'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['prd_nginx-exporter:9113'] # Use docker internal Network
+
+  - job_name: 'prd_mariadb'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['prd_mysqld-exporter:9104'] # Use docker internal Network
+
+# Connections with stg exporters
+  - job_name: 'stgnginx'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['stg_nginx-exporter:9113'] # Use docker internal Network
+
+  - job_name: 'stgmariadb'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['stg_mysqld-exporter:9104'] # Use docker internal Network
+      

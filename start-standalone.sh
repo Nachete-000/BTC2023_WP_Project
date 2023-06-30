@@ -1,0 +1,2 @@
+docker-compose --env-file  ./.envstandalone -f docker-compose.standalone.yml up dev_db dev_wordpress dev_nginx dev_wpcli --build -d
+docker-compose --env-file  ./.envstandalone -f docker-compose.standalone.yml up dev_testwpcli --build -d

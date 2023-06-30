@@ -1,0 +1,64 @@
+version: '3'
+
+name: "prd-mon-wp"
+services:
+  prd_mysqld-exporter:
+    image: prom/mysqld-exporter:v0.14.0     # Forced to this version, with newer version doesn't work and can't connect with mariadb
+    container_name: "prd_mysqld-exporter"
+    restart: unless-stopped
+    user: root
+    # Uncomment next line if you want access, port not required be published
+    # ports:
+    #   - "9104:9104"
+    environment:
+      # Uncomment other parameters to be added
+      - "DATA_SOURCE_NAME=${MYSQL_MON_USER}:${MYSQL_MON_PASSWORD}@(${PRD_WORDPRESS_WEBSITE_URL_WITHOUT_HTTP}:3306)/"
+      - "collect.auto_increment.columns=true"
+      - "collect.info_schema.userstats=true"
+      - "collect.info_schema.tablestats=true"
+      - "collect.info_schema.query_response_time=true"
+      - "collect.perf_schema.tableiowaits=true"
+      - "collect.perf_schema.tablelocks=true"
+      # - "collect.global_status=true"
+      # - "collect.global_variables=true"
+      # - "collect.slave_status=true"
+      # - "collect.binlog_size=true"
+      # - "collect.info_schema.innodb_metrics=true"
+      # - "collect.engine_tokudb_status=true"
+      # - "collect.info_schema.innodb_tablespaces=true"
+      # - "collect.info_schema.tables=true"
+      # - "collect.info_schema.tables.databases=true"
+      # - "collect.info_schema.processlist=true"
+      # - "collect.info_schema.processlist.min_time=true"
+      # - "collect.perf_schema.eventsstatements=true"
+      # - "collect.perf_schema.eventsstatements.limit=true"
+      # - "collect.perf_schema.eventsstatements.timelimit=true"
+      # - "collect.perf_schema.eventsstatements.digest_text_limit=true"
+      # - "collect.perf_schema.indexiowaits=true"
+      # - "collect.perf_schema.file_events=true"
+      # - "collect.perf_schema.eventswaits=true"
+    # depends_on:
+    # - prometheus
+    networks:
+      - mon-net
+
+  prd_nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: "prd_nginx-exporter"
+    restart: unless-stopped
+    # Uncomment ports lines if you want access, port not required be published
+    # ports:
+    # - 9113:9113
+    command:
+    - '-nginx.scrape-uri'
+    - 'http://${PRD_WORDPRESS_WEBSITE_URL_WITHOUT_HTTP}:${PRD_NGINX_PORT}/status'      # Change value with host:port required
+    # - '-web.listen-address'
+    # - '9113'
+    # depends_on:
+    # - prometheus
+    networks:
+      - mon-net
+
+networks:
+  mon-net:
+    name: mon-net

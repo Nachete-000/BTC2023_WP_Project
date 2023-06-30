@@ -1,0 +1,120 @@
+#################################################################
+# # Credentials:
+# # Mysql Database connection
+WORDPRESS_DB_USER="wpusr"
+WORDPRESS_DB_PASSWORD="Password123#"
+MYSQL_USER=${WORDPRESS_DB_USER}
+MYSQL_PASSWORD=${WORDPRESS_DB_PASSWORD}
+
+MYSQL_ROOT_USER="root"
+MYSQL_ROOT_PASSWORD="Password123#"
+
+WORDPRESS_ADMIN_USERNAME="adminwp"
+WORDPRESS_ADMIN_PASSWORD="Password123#"
+
+MYSQL_MON_USER="exporter"
+MYSQL_MON_PASSWORD="Password123#"
+#################################################################
+
+#################################################################
+# Branch Name and Build 
+# Change this variable to generate correct names, dev, stg, prd 
+
+ENVIRONMENT_NAME=standalone
+BUILD_ID=00
+
+NGINX_PORT=80
+DEV_NGINX_PORT=5080
+STG_NGINX_PORT=4080
+PRD_NGINX_PORT=80
+
+MYSQL_DATABASE="wpdb"
+#  Other MariaDB variables passed as credentials
+#MYSQL_ROOT_PASSWORD
+#MYSQL_USER
+#MYSQL_PASSWORD
+#MYSQL_MON_USER
+#MYSQL_MON_PASSWORD
+#  WordPress variables
+WORDPRESS_DB_NAME="wpdb"
+WORDPRESS_DOMAIN="localhost"
+#  Wordpress site URL
+DEV_WORDPRESS_WEBSITE_URL="http://devwp.local"
+# STG_WORDPRESS_WEBSITE_URL="http://stgwp.local"
+# PRD_WORDPRESS_WEBSITE_URL="http://wp.local"
+
+DEV_WORDPRESS_WEBSITE_URL_WITHOUT_HTTP="devwp.local"
+STG_WORDPRESS_WEBSITE_URL_WITHOUT_HTTP="stgwp.local"
+PRD_WORDPRESS_WEBSITE_URL_WITHOUT_HTTP="wp.local"
+
+DEV_WORDPRESS_DB_HOST="dev_db"
+STG_WORDPRESS_DB_HOST="stg_db"
+PRD_WORDPRESS_DB_HOST="prd_db"
+
+DEV_NGINX_HOST="dev_nginx"
+STG_NGINX_HOST="stg_nginx"
+PRD_NGINX_HOST="prd_nginx"
+PRD_WPCLI_HOST="prd_wpcli"
+
+# WordPress URL Structure
+WORDPRESS_WEBSITE_POST_URL_STRUCTURE="/blog/%postname%/"
+# Wordpress admin portal user data access and e-mail
+WORDPRESS_ADMIN_EMAIL="admin@wp.local"
+
+DEV_WORDPRESS_HOST="dev_wordpress"
+STG_WORDPRESS_HOST="stg_wordpress"
+PRD_WORDPRESS_HOST="prd_wordpress"
+
+# Wordpress site tittle for each environment
+DEV_WORDPRESS_WEBSITE_TITLE="DEV-DevOps·"
+STG_WORDPRESS_WEBSITE_TITLE="STG-DevOps~"
+PRD_WORDPRESS_WEBSITE_TITLE="DevOps_BLOG"
+
+# Docker storage variables for volumes
+DEV_WP_PATH="dev_wp"
+DEV_DB_PATH="dev_db"
+STG_WP_PATH="stg_wp"
+STG_DB_PATH="stg_db"
+STG_DB_BACKUP_PATH="stg_db_backup"
+PRD_WP_PATH="wp"
+PRD_DB_PATH="db"
+PRD_DB_BACKUP_PATH="db_backup"
+
+# Test Variables
+WPINSTALLMESSAGE="Parece que ya has instalado WordPress"
+OUTPUT_TEST="Output Ok"
+
+# dev Content Creation
+TAGS="tagdevone,tagdevtwo,tagdevthree,tagdevfour,tagdevfive,tagdevsix,tagdevseven,tagdeveight,tagdevnine,tagdevten"
+CONTENT="contentdev1,contentdev2,contentdev3,contentdev4,contentdev5,contentdev6,contentdev7,contentdev8,contentdev9,contentdev10"
+# WP Cli post creation, postnumber, comments, time to wait between comment and random post number creation
+DEV_NUMBERPOST=5
+DEV_NUMBERCOMMENTS=2
+MAXWAITTIMECOMMENT=2
+MINWAITTIMECOMMENT=1
+MAXWAITTIMEPOST=2
+MINWAITTIMEPOST=1
+POSTRANDOM="N"
+# time to wait before destroy environment (seconds)
+TIMETOWAIT=30
+
+
+#  stg Content Creation
+STG_TAGS="tagstgone,tagstgtwo,tagstgthree,tagstgfour,tagstgfive,tagstgsix,tagstgseven,tagstgeight,tagstgnine,tagstgten"
+STG_CONTENT="contentstg1,contentstg2,contentstg3,contentstg4,contentstg5,contentstg6,contentstg7,contentstg8,contentstg9,contentstg10"
+#WP Cli post creation, postnumber, comments, time to wait between comment and random post number creation
+STG_NUMBERPOST=15
+STG_NUMBERCOMMENTS=5
+STG_MAXWAITTIMECOMMENT=2
+STG_MINWAITTIMECOMMENT=1
+STG_MAXWAITTIMEPOST=2
+STG_MINWAITTIMEPOST=1
+STG_POSTRANDOM="Y"
+#time to wait before destroy environment (seconds)
+STG_TIMETOWAIT=30
+
+
+
+# # Grafana
+GF_SECURITY_ADMIN_PASSWORD="Password123#"
+GF_USERS_ALLOW_SIGN_UP=false

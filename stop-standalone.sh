@@ -1,0 +1,1 @@
+docker-compose --env-file  ./.envstandalone -f docker-compose.standalone.yml down -v --rmi local

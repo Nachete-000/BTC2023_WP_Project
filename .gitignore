@@ -1,0 +1,5 @@
+_storage/jenkins/**
+
+**/__pycache__
+
+grafana/grafana_admin_pwd
