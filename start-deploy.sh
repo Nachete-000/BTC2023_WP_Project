@@ -22,7 +22,7 @@ function getgrafanacredentials {
 
 # Function DeployServices
 function deployservices {
-    docker compose -f docker-compose-svc.yml up -d
+    docker compose -f docker-compose-svc.yml up -d --build
 
     CONTAINER_NAME_CHECK="Jenkins-svc"
     while [ "${CHECK}" != "running" ]

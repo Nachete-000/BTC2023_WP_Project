@@ -212,7 +212,7 @@ def dockerstackdeploy(){
             --env-add WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD} \
             --env-add WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME}
 
-            # Change Service scale
+            # Change Service scale, uncomment this section to scale to desired server number after deployment.
             # docker service scale ${PRD_WORDPRESS_DB_HOST}=${PRD_DB_REPLICAS}
             # docker service scale ${PRD_WORDPRESS_HOST}=${PRD_REPLICAS}
             # docker service scale ${PRD_NGINX_HOST}=${PRD_REPLICAS}
@@ -222,7 +222,7 @@ def dockerstackdeploy(){
             docker compose -f docker-compose-prdmon.yml up -d --build
 
 
-            echo "END Stack ${DOCKER_SWARM_STACK_NAME} configuration with ${PRD_REPLICAS} replicas"
+            echo "END Stack ${DOCKER_SWARM_STACK_NAME} configuration"
         fi 
         }
 
@@ -811,11 +811,14 @@ pipeline {
                             println "Deployed images to registry ${DOCKER_REGISTRY_HOST}:${DOCKER_REGISTRY_PORT} "
 
                             // Create database backup in other volume before update
-                            println "Creating database backup wpdb-${BUILD_ID}"
+                            println "Creating database backup ${PRD_WORDPRESS_DB_HOST} wpdb-${BUILD_ID}"
 
                             sh 'docker exec $(docker ps -q -f name=${PRD_WORDPRESS_DB_HOST}) mkdir -p /mnt/backup/wpdb-${BUILD_ID}'
                             sh 'docker exec $(docker ps -q -f name=${PRD_WORDPRESS_DB_HOST}) mariabackup --backup --databases=wpdb --target-dir=/mnt/backup/wpdb-${BUILD_ID} --user=root --password=${MYSQL_ROOT_PASSWORD}'
                             sh 'docker exec $(docker ps -q -f name=${PRD_WORDPRESS_DB_HOST}) bash -c "cd /mnt/backup; ls -A1t | tail -n +6 | xargs rm -frd"'
+
+                            // Display docker service
+                            sh 'docker service ls'
 
                             // Deploy to production
                             println "Deploying registry images to production"
@@ -851,7 +854,8 @@ pipeline {
                         sh "docker service rollback ${PRD_WORDPRESS_HOST}"
                         sh "docker service rollback ${PRD_NGINX_HOST}"
                         sh "docker service rollback ${PRD_WPCLI_HOST}"
-
+                        // Display docker service after rollback
+                        sh 'docker service ls'
                     }
                 }
             }
