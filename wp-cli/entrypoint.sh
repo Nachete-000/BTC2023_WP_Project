@@ -86,6 +86,7 @@
 	wp post exists 1
 	if [ $? == 0 ]; then 
 		wp post update 1 --post_content="${POST2TEXT}" --post_title="Hello DevOps 2023" --post_status=publish
+		wp media import https://www.suse.com/assets/img/devops-process.png --post_id=1 --featured_image
 	fi
 
 	wp post exists 2

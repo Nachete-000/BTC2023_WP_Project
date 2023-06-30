@@ -391,7 +391,7 @@ pipeline {
             DEV_TAGS="tagdevone,tagdevtwo,tagdevthree,tagdevfour,tagdevfive,tagdevsix,tagdevseven,tagdeveight,tagdevnine,tagdevten"
             DEV_CONTENT="contentdev1,contentdev2,contentdev3,contentdev4,contentdev5,contentdev6,contentdev7,contentdev8,contentdev9,contentdev10"
             // WP Cli post creation, postnumber, comments, time to wait between comment and random post number creation
-            DEV_NUMBERPOST=5
+            DEV_NUMBERPOST=3
             DEV_NUMBERCOMMENTS=2
             DEV_MAXWAITTIMECOMMENT=2
             DEV_MINWAITTIMECOMMENT=1
@@ -406,8 +406,8 @@ pipeline {
             STG_TAGS="tagstgone,tagstgtwo,tagstgthree,tagstgfour,tagstgfive,tagstgsix,tagstgseven,tagstgeight,tagstgnine,tagstgten"
             STG_CONTENT="contentstg1,contentstg2,contentstg3,contentstg4,contentstg5,contentstg6,contentstg7,contentstg8,contentstg9,contentstg10"
             // WP Cli post creation, postnumber, comments, time to wait between comment and random post number creation
-            STG_NUMBERPOST=1 //15
-            STG_NUMBERCOMMENTS=2 //5
+            STG_NUMBERPOST=6 //15
+            STG_NUMBERCOMMENTS=4 //5
             STG_MAXWAITTIMECOMMENT=2
             STG_MINWAITTIMECOMMENT=1
             STG_MAXWAITTIMEPOST=2
@@ -448,8 +448,9 @@ pipeline {
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         stage('DEPLOY DOCKER STACK') {
             environment{
-                PRD_REPLICAS=1
-                PRD_DB_REPLICAS=1
+                // Variables to modify with command line replica number, not in use, see dockerstackdeploy() function
+                // PRD_REPLICAS=1
+                // PRD_DB_REPLICAS=1
             }
             when {
                 expression { 
@@ -692,7 +693,7 @@ pipeline {
                 TIMETOWAIT="${STG_TIMETOWAIT}"
                 // Locust
                 LOCUST_USERS=50
-                LOCUST_SPAWN_RATE=1
+                LOCUST_SPAWN_RATE=2
                 LOCUST_RUNTIME=90
                 LOCUST_FILE="stg_locustfile.py"
                 // Locust scale workers
@@ -815,7 +816,7 @@ pipeline {
 
                             sh 'docker exec $(docker ps -q -f name=${PRD_WORDPRESS_DB_HOST}) mkdir -p /mnt/backup/wpdb-${BUILD_ID}'
                             sh 'docker exec $(docker ps -q -f name=${PRD_WORDPRESS_DB_HOST}) mariabackup --backup --databases=wpdb --target-dir=/mnt/backup/wpdb-${BUILD_ID} --user=root --password=${MYSQL_ROOT_PASSWORD}'
-                            sh 'docker exec $(docker ps -q -f name=${PRD_WORDPRESS_DB_HOST}) bash -c "cd /mnt/backup; ls -A1t | tail -n +6 | xargs rm -frd"'
+                            sh 'docker exec $(docker ps -q -f name=${PRD_WORDPRESS_DB_HOST}) bash -c "cd /mnt/backup; ls -A1t | tail -n +6 | xargs rm -frd;  ls -1t /mnt/backup/"'
 
                             // Display docker service
                             sh 'docker service ls'
@@ -872,7 +873,7 @@ pipeline {
                 NGINX_HOST="wp.local"
                 // Locust variables
                 LOCUST_USERS=50
-                LOCUST_SPAWN_RATE=1
+                LOCUST_SPAWN_RATE=2
                 LOCUST_RUNTIME=90
                 LOCUST_FILE="prd_locustfile.py"
                 // Locust scale workers

@@ -306,11 +306,11 @@ Para la monitorización del entorno se utilizan los siguientes elementos:
 
 ### Grafana
 
-- No requiere configuración adicional, se importa la configuración desde fichero
+- No requiere configuración adicional, se importa una configuración fija desde fichero.
 - Acceder a grafana http://<ip_address>:3000
 - Acceder con las credenciales
     - Usuario: admin
-    - Password: Contraseña establecida en el script de inicio
+    - Password: Contraseña establecida en el script de inicio (./start-deploy.sh)
 - Grafana permite monitorizar los parámetros del entorno de stg y prd
 - Se puede acceder a los dashboard preconfigurados:
     - Docker cAdvisor
