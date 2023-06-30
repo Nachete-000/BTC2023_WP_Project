@@ -447,7 +447,7 @@ pipeline {
         // Deployment stack if not running
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         stage('DEPLOY DOCKER STACK') {
-            // Commented variable environment:
+            // Commented variable section:
             // environment{
                 // Variables to modify with command line replica number, not in use, see dockerstackdeploy() function
                 // PRD_REPLICAS=1
