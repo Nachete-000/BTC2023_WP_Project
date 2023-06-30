@@ -447,11 +447,12 @@ pipeline {
         // Deployment stack if not running
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         stage('DEPLOY DOCKER STACK') {
-            environment{
+            // Commented variable environment:
+            // environment{
                 // Variables to modify with command line replica number, not in use, see dockerstackdeploy() function
                 // PRD_REPLICAS=1
                 // PRD_DB_REPLICAS=1
-            }
+            // }
             when {
                 expression { 
                     ( env.BRANCH_NAME == 'main' && 
