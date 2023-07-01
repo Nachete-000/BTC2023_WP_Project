@@ -11,7 +11,6 @@
 ## All variables managed by jenkinsfile
 version: '3.8'
 name: "dev-wp"
-# name: "website-${ENVIRONMENT_NAME}-${BUILD_ID}"
 services:
   dev_db:
     build:

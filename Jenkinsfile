@@ -837,13 +837,14 @@ pipeline {
                             
                             println "Deploy ${DOCKER_REG_IMAGE_WPCLI}"
                             prd_docker_update_wpcli()
-
                         }
                 }
             }
             post{
                 success {
                     script {
+                        // Display docker service
+                        sh 'docker service ls'
                         println "${ENVIRONMENT_NAME} environment deployed"
                     }
                 }

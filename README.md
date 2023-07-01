@@ -30,21 +30,16 @@ contenedores distintos o, también, un modelo más simplificado en un contenedor
 - Entorno local con Docker
     - Instalación https://docs.docker.com/engine/install/ubuntu/
     - Solución a problemas de permisos: https://stackoverflow.com/questions/48957195/how-to-fix-docker-got-permission-denied-issue
-    - El entorno se ha progado corectamente en:
+    - El entorno se ha probado en:
         - Ubuntu 22 LTS
-        - Windows 11 con WSL2, a tener en consideración https://stackoverflow.com/a/73028795 concretamente las imágenes docker al realizar un build no se ejecutan los ficheros, por ej. en las imágenes wp-cli o wp-cli-test el fichero entrypoint.sh deben de estar configurados como LF y no como CRLF.
-    - No se ha podido probar:
-        - MacOS
+        - Windows 11 con WSL2 (A tener en consideración: https://stackoverflow.com/a/73028795, los ficheros entrypoint.sh en wp-cli o wp-cli-test no se ejecutan, estos ficheros deben de estar configurados como LF y no como CRLF).
    
 ## Entorno
 
-
-
 ### Git
-- Se utiliza GitHub como repositorio de código.
-- Consta de la rama:
+- Se utiliza GitHub como repositorio de código en la rama:
     - main --> al modificar sobre esta rama se realizará el despliegue del entorno, salvo error de alguno de los elementos.
-- Para el despliegue de la solución integrado con Git se utiliza Jenkins, que requiere configuración previa (se describe el proceso más adelante)
+- Para el despliegue de la solución integrado con Git se utiliza Jenkins, que requiere configuración previa (se describe el proceso más adelante).
     - A través del trabajo multibranch Jenkins despliegua desde la rama 'main' los 3 entornos.
     ![Jenkins Pipeline](./Readme/img/jenkins_pipeline.jpg)
     - También se encarga de desplegar las variables de entorno para los contenedores docker.
@@ -59,6 +54,7 @@ Para la monitorización del entorno se utilizan los siguientes elementos:
 - 2 x exporter para mysql/mariadb (stg & prd)
 - 2 x exporter para nginx (stg & prd)
 - plugin para wordpress que se publica vía nginx (stg & prd)
+- La información se muestra a gravés de Grafana.
 
 ## Aplicación 
 
@@ -79,7 +75,7 @@ Para la monitorización del entorno se utilizan los siguientes elementos:
         - Prometheus: http://<ip_address>:9090
 - En una instalación por defecto, WordPress nos pide seleccionar idioma y a continuación usuario admin, contraseña y dirección de e-mail, una vez instalado, muestra por defecto una página web:
 ![WordPress default web page](./Readme/img/default_wordpress_install.jpg)
-- La solución despliga y configura por defecto el entorno con una serie de valores establecidos, idioma, titulo del sitio, configuración de reescritura de urls, usuario, contraseña del administrador, plug-ins, temas, etc, para que no sea necesaria una personalización manual de ninguno de los elementos.
+- La solución despliga y configura el entorno con una serie de valores establecidos, idioma, titulo del sitio, configuración de reescritura de urls, usuario, contraseña del administrador, plug-ins, temas, etc, para que no sea necesaria una personalización manual de ninguno de los elementos en cualquiera de los entornos, dev, stg o prd.
 
 ### - Entorno dev
 
@@ -125,10 +121,10 @@ Para la monitorización del entorno se utilizan los siguientes elementos:
 - Utiliza volúmenes persistentes
     - wordpress
     - bbdd
-- Al ser volumenes persistentes, la base de datos se almacena en volumen persistente y el contenido creado previo no se elimina.
+- Al ser volumenes persistentes, la base de datos también lo es, por lo que el contenido creado previo no se elimina, ni se eliminan los contenidos subidos.
 - También realiza la configuración del sitio, de la misma forma que en dev, para unificar el entorno vía código.
 - Monitorización:
-    - En este entorno se incluye una monitorización
+    - En este entorno se incluye una monitorización de peticiones de wordpress, post publicados y mysql.
     - Se despliegan los exporter para monitorización con Prometheus para nginx y mysql.
     - Y se utiliza el plugin de wordpress configurado para monitorizar el entorno.
 - Pruebas a través del wp-cli-test:
@@ -159,12 +155,13 @@ Para la monitorización del entorno se utilizan los siguientes elementos:
 - Cuando se realiza una modificación de la rama main, se realiza lo siguiente:
     - Se suben las imágenes al registry
     - Se hace un backup de la BBDD en el volumen backup y se almacenan las últimas 5 copias
+    - Actualización de imágenes (1 cada 10s definido en el fichero .yml de configuración)
     - El despliegue se realiza con el siguiente número de imágenes en ejecución definido en el fichero .yml de docker compose del entorno.
         - bbdd: 1
         - wordpress: 3
         - nginx: 3
         - wp-cli: 1
-    - Actualización de imágenes (1 cada 10s definido en el fichero .yml de configuración)
+
 - Una vez finalizado se realiza una prueba de carga vía locust, generando peticiones al entorno durante un breve tiempo.
 
 ## Configuración del entorno
@@ -195,7 +192,7 @@ Para la monitorización del entorno se utilizan los siguientes elementos:
                                      Dockerfile para la creación del contenedor
     - ./nginx                   ---> default.conf para la configuración de nginx
                                      Dockerfile para la creación del contenedor
-    - ./prometheus              ---> Fichero de configuración de prometheus
+    - ./prometheus              ---> Fichero de configuración de Prometheus
     - ./wp                      ---> Dockerfile para la configuración de la imagen de docker
                                      disable-canonical-redirects.php plugin para la instalación de wordpress
     - ./wp-cli                  ---> Dockerfile para la configuración de la imagen
@@ -240,7 +237,7 @@ Para la monitorización del entorno se utilizan los siguientes elementos:
 
 ### Configuración de jenkins
 
-- A tener en consideración que Jenkins almacena el contenido en la ruta local ./_storage/jenkins
+- A tener en consideración que Jenkins almacena el contenido en la ruta local del host: ./_storage/jenkins
 - El script `./deploy.sh` facilita los pasos a seguir, en todos casos se puede localizar la contraseña de Jenkins de admin mediante el comando: `docker logs Jenkins-svc`
 - obtener la contraseña generada con `docker logs Jenkins-svc`
 - Instalar los plugins sugeridos
@@ -322,27 +319,56 @@ Para la monitorización del entorno se utilizan los siguientes elementos:
 
 ### Configuración de Prometheus
 
-- No requiere configuración adicional, se importa la configuración desde fichero
-- Se puede acceder a prometheus desde la url http://<ip_address>:9090
+- No requiere configuración adicional, se importan las configuraciones desde fichero.
+- Se puede acceder a Prometheus desde la url http://<ip_address>:9090
 - Prometheus usa la red mon-net para conectar con los distintos elmentos del entorno de monitorización.
 
 ### Configuración de cadvisor
 
-- No requiere de configuración adicional
+- No requiere de configuración adicional.
 - cAdvisor solamente es accesible vía Grafana, no se puede usar la url http://<ip_address>:8080 para el acceso desde el exterior.
 - Usa la red mon-net para conectar con los distintos elmentos del entorno.
 
 ![Grafana cAdvisor](./Readme/img/grafana_cadvisor.jpg)
 
-## Esquema de volumenes de almacenamiento prd
+### Registro de imágenes
 
-- NGINX, WordPress y WordPress-cli requieren de un volumen de disco compartido de acceso a los datos.
-- Mariadb, tiene asignados 2 volúmenes uno para las bbdd y otro para el backup.
-- Jenkins utiliza un volumen de almacenamiento local de la máquina quelo ejecuta.
+- Se realiza el acceso vía localhost sin credenciales.
 
-![Storage access](./Readme/img/prd_storage_access.jpg)
+## Esquema de volumenes de almacenamiento
+
+- NGINX, WordPress, WordPress-cli y WordPress-cli-test:
+    - requieren de un volumen de disco compartido de acceso a los datos.
+    - dev, el disco no es persistente, pero para su funcionamiento ha de estar compartido.
+    - stg y prd, los volumenes son persistentes.
+- Mariadb
+    - dev, los volumenes son no persistentes.
+    - stg, tiene un volumen persistente
+    - prd, tiene asignados 2 volúmenes uno para las bbdd y otro para backup.
+- Jenkins
+    - utiliza un volumen de almacenamiento local de la máquina que lo ejecuta.
+- Registry
+    - utiliza un volumen persistnete.
+- Prometheus
+    - usa también un volumen persistente para almacenar los datos.
+
+La siguiente imagen muestra como sería el almacenamiento del entorno de prd.
+
+![Storage access prd](./Readme/img/prd_storage_access.jpg)
 
 ## Esquema de red
+
+- dev-net
+    - red para el entorno dev.
+- stg-net
+    - red para el entorno stg.
+    - algunos contenedores (como nginx y mysql) están conectadas también a la red mon-net.
+- prd-net
+    - red overlay para los elementos de producción.
+- svc-net
+    - red para servicios transversales (jenkins, registry)
+- mon
+    - red de Grafana, exporters para Prometheus y Prometheus, así como los contenedores de stg antes mencionados.
 
 - El siguiente esquema simplifica como se gestiona el tráfico en prd.
 ![Network Traffic](./Readme/img/prd_network_port_access.jpg)
@@ -351,50 +377,57 @@ Para la monitorización del entorno se utilizan los siguientes elementos:
 - Base de datos
     - Sin alta disponibilidad ni redundancia
     - Sería recomendable configurar al menos un cluster de 2 o 3 nodos, eso permitiría actualizaciones no disruptivas sobre el contenedor de la BBDD.
-    - Limitar la exposición del puerto 3306 de la base de datos al exterior para su monitorización y que no sea accesible desde el exterior.
+    - Limitar la exposición del puerto 3306 de la base de datos al exterior para su monitorización y que no sea accesible desde el exterior, actualmente se utiliza para el exporter de monitorización.
+
 - Monitorización del entorno:
-    - Monitorización básica del entorno
-    - No hay alertas configuradas, solamente obtención de métricas y parámetros.
+    - Monitorización básica del entorno en la que no hay alertas configuradas, solamente se obtienen métricas.
     - Cadvisor, se ha implementado, aunque sería prescindible aunque esta solución a fecha de hoy está en fase de desarrollo: https://docs.docker.com/config/daemon/prometheus/
+
 - Seguridad
     - Cifrado
         - No hay un despliegue de certificados ni uso de https como protocolos de acceso.
         - Tampoco hay cifrado en el transporte de las comunicaciones de las BBDD.
+        - Sería recomendable implementar https y cifrado TLS en las comunicaciones con algoritmo de cifrados actuales.
+        - La entrega de certificados debería gestionarse de forma segura con alguna gestión de secretos/contraseñas.
     - Gestión de contraseñas y secretos
         - Mejorarlo con un gestor de contraseñas externo, se ha utilizado Jenkins por unificar los elementos del entorno local.
-        - Por simplificar el despliegue en Jenkins y a modo muestra se han utilizado las mismas credenciales para los distintos entornos, pero sería recomendable utilizar contraseñas distintas para cada uno de ellos.
+        - Por simplificar la configuración del despliegue en Jenkins y a modo muestra, se han utilizado las mismas credenciales para los distintos entornos, pero sería recomendable utilizar contraseñas distintas para cada uno de ellos.
         - Se ha utilizado docker secrets en Grafana para no utilizar un fichero con variables de entorno con contraseñas y evitar propagación a otros contenedores, pero al almacenarse en fichero con texto plano no da una capa de seguridad adicional al menos en docker-compose.
         - Mejorar el despliegue de Jenkins, para evitar la solicitud de aprobación de scripts.
-        - En la medida de lo posible, se ha tratado de otorgar los mínimos privilegios posibles a los usuarios/servicios como por ej. al usuario exporter de mysql para prometheus.
+        - En la medida de lo posible, se ha tratado de otorgar los mínimos privilegios posibles a los usuarios/servicios como por ej. al usuario exporter de mysql para Prometheus.
     - Gestión de logs y trazabilidad de eventos
         - No se ha incluido la parte de gestión de logs del entorno. Es una tarea pendiente.
     - Puesta en marcha del entorno
-        - Se ha intentado que en la puesta en marcha el usuario final tenga que realizar la mínima parte del despliegue y configuración del entorno, aunque como se ha comentado, requiere una configuración de Jenkins para el despliegue, automatizar el proceso de configuración de Jenkins sería una mejora.
+        - Se ha intentado que en la puesta en marcha el usuario final tenga que realizar la mínima parte del despliegue y configuración del entorno, aunque como se ha comentado, requiere una configuración de Jenkins para el despliegue.
+        - Automatizar el proceso de configuración de Jenkins, también como mejora.
     - Uso de variables
         - Se ha intentado gestionar los entornos con el uso de variables para simplificar futuras configuraciones, usos o aplicaciones para poder personalizar o trasladar el entorno.
-        - Estaría pendiente mejorar la parte de python con la parte de pruebas de carga y disponer de esos valores unificados y configurar el input con una variable, tanto para el fichero de jenkinsfile como para los ficheros .py que usa Locust.
         - También estería pendiente reducir el número de variables usadas, simplificando el uso de algunas de ellas o evitando duplicidades.
     - Código
-        - Se ha intentado reutilizar funciones para algunas partes de código aplicado que son susceptibles de ser reutilizadas.
         - No se ha aplicado ninguna herramienta para revisión de código, sería otro punto de mejora a aplicar.
     - Red
         - Se ha intentado minimizar la exposición de puertos al exterior y se ha tratado de utilizar las comunicaciones internas dentro del host (se adjunta esquema con la solución aplicada).
-        - Respecto a los exporters para nginx/wordpress no están securizados y serían accesibles desde el exterior. No muestran información sensible, pero como punto de mejora habría que limitar el acceso y la exposición a esos datos.
+        - Respecto a los exporters para nginx/wordpress no están securizados y serían accesibles desde el exterior. No muestran información sensible, pero como punto de mejora habría que limitar el acceso y la exposición a esos datos a través de la configuración del fichero de configuración.
+    - Registro de imágenes
+        - Se usa vía localhost sin autenticación y seguridad, recomendado solo para pruebas como dice la web de docker.
+        - Sería recomendable requerir autenticación y habilitar certificados para la comunicación.
 
 - Pruebas de carga:
     - Determina 3 posibles errores:
         - Tasa de error de peticiones totales > 1%
         - Respuesta media > 5s
         - Percentil 95% > 5s
-    - No está gestionado por variables, tanto los ficheros python de locust como la configuración aplicada en el script que se ejecuta desde Jenkins
-        - Sería recomendable utilizar variables para la gestión y no valores fijos en el código.
+    - Se define en este punto, aunque es compartido con el punto anterior de uso de variables:
+        - Estaría pendiente mejorar la parte de python con la parte de pruebas de carga y disponer de esos valores unificados y configurar el input con una variable, tanto para el fichero de jenkinsfile como para los ficheros .py que usa Locust.
+        - Sería recomendable utilizar variables para la gestión y no valores fijos en el código tal y como está ahora.
     - Docker swarm no dispone de autoescalado.
-    - Independientemente del autoescalado, como problema se ha detectado que al realizar las pruebas de carga, el backend de WordPress pone la CPU del host al 100% de uso con 50 usuarios de prueba, esto hace que se disparen los tiempos de respuesta en los resultados.
+    - Independientemente del autoescalado, como problema se ha detectado que al realizar las pruebas de carga, el backend de WordPress hace que la CPU del host al 100% de uso con 50 usuarios de prueba, esto hace que se disparen los tiempos de respuesta en los resultados.
         - En el entorno de stg que solo hay un nodo backend de WordPress dispara la CPU del host. A tener en cuenta que el entorno de stg se realizan consultas por categorías.
         - En el enotrno de prd que hay 3 nodos backend de WordPress, la carga de CPU del host donde se ejecuta es similar en ambos casos, pero se puede observar como se reparte la carga entre los 3 contenedores. A tener en cuenta que hay menos contenido de consulta, pero se producen unas 1300 consultas sobre la BBDD en cada caso.
-        - En este caso como conclusión al cuello de botella en este caso estaría en el host, de ahí los tiempos de respuesta elevados.
+        - En este caso como conclusión al cuello de botella en este caso estaría en el host, de ahí los tiempos de respuesta elevados, estos tiempos se han mejorado haciendo un escalado vertical de la máquina (añadiendo más vCPU)
         - Como mejora sería la implementación en una solución cloud con un autoescalado de los elementos.
         - Si se ejecuta localmente dependerá de la máquina y capacidad de proceso, se recomienda revisar los valores en los ficheros ./prd_locustfile.py y ./stg_locustfile.py así como los mensajes de output, también los valores en el fichero ./Jenkinsfile línea: `export LOCUST_AVERAGE_RESPONSE=5000` y `export LOCUST_PERCENTILE_RESPONSE=5000`, o bien comentar las líneas del fichero ./Jenkinsfile que contienen el if/elif que hacen alusión a las condiciones de la función loadtestfunction() comentandolas con un # para que no apliquen.
+        - Las pruebas actuales se realizan con 50 usuarios durante 90 seg y los valores configurados son 5000ms.
 
     ![Jenkins Pipeline](./Readme/img/loadtest_cpu_container_result.jpeg)
     ![Jenkins Pipeline](./Readme/img/loadtest_cpu_host_result.jpeg)
@@ -454,7 +487,7 @@ Para la monitorización del entorno se utilizan los siguientes elementos:
 
 ### Jenkinsfile con varias ramas Git
 
-- Como alternativa al despliegue desde una sola rama, se ha creado un Pipeline de Jenkins (el fichero se puede localizar bajo la ruta ./src/Jenkins/Jenkinsfilealt) dónde se realiza el despliegue del entorno en paralelo.
+- Como alternativa al despliegue desde una sola rama, se ha creado un Pipeline de Jenkins (el fichero se puede localizar bajo la ruta ./src/supportJenkins/Jenkinsfile) dónde se realiza el despliegue del entorno en paralelo en función de la rama.
 - Consiste en tener varias ramas, en este caso dev, stg y main y en función de la rama en la que se hacen modificaciones se haría un despliegue, las modificaciones a stg y main deberían de ser vía pull request:
 
 ![Jenkins Pipeline](./Readme/img/jenkins_pipeline_alt.jpg)

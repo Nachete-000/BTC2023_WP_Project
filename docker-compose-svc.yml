@@ -40,7 +40,7 @@ services:
       - /var/run:/var/run:rw
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
-    # ports:
+    # ports:                        # Removed exposed ports, not required
     #   - 8081:8080
     networks:
       - mon-net     

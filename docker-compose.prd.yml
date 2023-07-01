@@ -38,8 +38,6 @@ services:
         parallelism: 1
         delay: 10s
         order: start-first
-    # ports:
-    #   - "9000:9000"
     environment:
       - WORDPRESS_DB_HOST=${PRD_WORDPRESS_DB_HOST}
       - WORDPRESS_DB_USER=${WORDPRESS_DB_USER}
