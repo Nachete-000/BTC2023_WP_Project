@@ -86,7 +86,7 @@
               },
               {
                 "color": "red",
-                "value": 22
+                "value": 40
               }
             ]
           }
@@ -181,7 +181,7 @@
               },
               {
                 "color": "red",
-                "value": 25
+                "value": 40
               }
             ]
           }
@@ -336,7 +336,7 @@
               },
               {
                 "color": "red",
-                "value": 16
+                "value": 50
               }
             ]
           }
@@ -504,7 +504,7 @@
               },
               {
                 "color": "red",
-                "value": 16
+                "value": 50
               }
             ]
           }
@@ -579,6 +579,6 @@
   "timezone": "",
   "title": "WordPress",
   "uid": "cd1ccc01-ca04-435b-a7bc-ab84295bdebd",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
