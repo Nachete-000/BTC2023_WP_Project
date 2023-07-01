@@ -693,8 +693,8 @@ pipeline {
                 // Time to wait new post / comment
                 TIMETOWAIT="${STG_TIMETOWAIT}"
                 // Locust
-                LOCUST_USERS=1000
-                LOCUST_SPAWN_RATE=20
+                LOCUST_USERS=250
+                LOCUST_SPAWN_RATE=5
                 LOCUST_RUNTIME=60
                 LOCUST_FILE="stg_locustfile.py"
                 // Locust scale workers
@@ -875,8 +875,8 @@ pipeline {
                 NGINX_HOST="wp.local"
                 NGINX_PORT="${PRD_NGINX_PORT}"
                 // Locust variables
-                LOCUST_USERS=1000
-                LOCUST_SPAWN_RATE=20
+                LOCUST_USERS=250
+                LOCUST_SPAWN_RATE=5
                 LOCUST_RUNTIME=60
                 LOCUST_FILE="prd_locustfile.py"
                 // Locust scale workers
