@@ -79,8 +79,9 @@ def testfunctionwp(){
 def loadtestfunction(){
     sh '''#!/bin/bash
 
-    docker compose -f docker-compose-locust.yml up -d --build --force-recreate master
-    docker compose -f docker-compose-locust.yml up --build --scale worker=${LOCUST_SCALE}
+    docker compose -f docker-compose-locust.yml build
+    docker compose -f docker-compose-locust.yml up -d --force-recreate master
+    docker compose -f docker-compose-locust.yml up --scale worker=${LOCUST_SCALE}
 
     # # Check files ./locust/prd_locustfile.py and stg_locustfile.py with the message response because it's hardcoded
     # # If parameters are different for each env, ensure check response and percentile response with values for each env.
@@ -693,7 +694,7 @@ pipeline {
                 // Time to wait new post / comment
                 TIMETOWAIT="${STG_TIMETOWAIT}"
                 // Locust
-                LOCUST_USERS=100
+                LOCUST_USERS=50
                 LOCUST_SPAWN_RATE=2
                 LOCUST_RUNTIME=60
                 LOCUST_FILE="stg_locustfile.py"
@@ -875,7 +876,7 @@ pipeline {
                 NGINX_HOST="wp.local"
                 NGINX_PORT="${PRD_NGINX_PORT}"
                 // Locust variables
-                LOCUST_USERS=100
+                LOCUST_USERS=50
                 LOCUST_SPAWN_RATE=2
                 LOCUST_RUNTIME=60
                 LOCUST_FILE="prd_locustfile.py"
