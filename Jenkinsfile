@@ -97,12 +97,15 @@ def loadtestfunction(){
     export LOCUST_AVERAGE_RESPONSE=2000
     export LOCUST_PERCENTILE_RESPONSE=2800
 
+    export LOCUST_ERROR_RESULT0="Bind for 0.0.0.0:8089 failed: port is already allocated"
     export LOCUST_ERROR_RESULT1="Test failed due to failure ratio > 1%"
     export LOCUST_ERROR_RESULT2="Test failed due to average response time ratio > ${LOCUST_AVERAGE_RESPONSE} ms"
     export LOCUST_ERROR_RESULT3="Test failed due to 95th percentile response time > ${LOCUST_PERCENTILE_RESPONSE} ms"
 
+
     LOCUST_LOG_RESULT=$(docker logs wp-locust-${ENVIRONMENT_NAME}-master 2>&1 )
 
+    LOCUSTRESULT0=$(echo "${LOCUST_LOG_RESULT}" | grep -oh "${LOCUST_ERROR_RESULT0}" )
     LOCUSTRESULT1=$(echo "${LOCUST_LOG_RESULT}" | grep -oh "${LOCUST_ERROR_RESULT1}" )
     LOCUSTRESULT2=$(echo "${LOCUST_LOG_RESULT}" | grep -oh "${LOCUST_ERROR_RESULT2}" )
     LOCUSTRESULT3=$(echo "${LOCUST_LOG_RESULT}" | grep -oh "${LOCUST_ERROR_RESULT3}" )
@@ -110,7 +113,10 @@ def loadtestfunction(){
     echo "Display log:"
     echo "${LOCUST_LOG_RESULT}"
 
-    if [ "${LOCUSTRESULT1}" = "${LOCUST_ERROR_RESULT1}" ]; then
+    if [ "${LOCUSTRESULT0}" = "${LOCUST_ERROR_RESULT0}" ]; then
+        echo "${LOCUST_ERROR_RESULT0}"
+        exit 1
+    elif [ "${LOCUSTRESULT1}" = "${LOCUST_ERROR_RESULT1}" ]; then
         echo "${LOCUST_ERROR_RESULT1}"
         exit 1
     elif [ "${LOCUSTRESULT2}" = "${LOCUST_ERROR_RESULT2}" ]; then
