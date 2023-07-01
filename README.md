@@ -144,10 +144,10 @@ Para la monitorización del entorno se utilizan los siguientes elementos:
 - Se realiza la configuración del sitio, pero no se genera contenido de pruebas ya que sería visible para todos los usuarios que usan la web de producción.
 - Para mantener coexistnecia de todos los entornos, por ejemplo, la instalación de un tema o un nuevo plugin, deberían de realizarse vía código:
     - A modo prueba se puede modificar el fichero ./wp-cli/entrypoint.sh líneas 56 y 57 eliminando los comentarios de las lineas wp plugin activate, esto activan los plugin de akismet y hello-dolly
-            ```#### TEST PLUGINS -- Comment / uncomment next line to test deployment
-            ## wp plugin activate hello
-            ## wp plugin activate akismet
-            ```
+    ```#### TEST PLUGINS -- Comment / uncomment next line to test deployment
+    ## wp plugin activate hello
+    ## wp plugin activate akismet
+    ```
 
 - Cuando se realiza una modificación de la rama main, se realiza lo siguiente:
     - Se suben las imágenes al registry
