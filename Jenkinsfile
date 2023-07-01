@@ -695,7 +695,7 @@ pipeline {
                 // Locust
                 LOCUST_USERS=100
                 LOCUST_SPAWN_RATE=2
-                LOCUST_RUNTIME=90
+                LOCUST_RUNTIME=60
                 LOCUST_FILE="stg_locustfile.py"
                 // Locust scale workers
                 LOCUST_SCALE=2
@@ -877,7 +877,7 @@ pipeline {
                 // Locust variables
                 LOCUST_USERS=100
                 LOCUST_SPAWN_RATE=2
-                LOCUST_RUNTIME=90
+                LOCUST_RUNTIME=60
                 LOCUST_FILE="prd_locustfile.py"
                 // Locust scale workers
                 LOCUST_SCALE=2
