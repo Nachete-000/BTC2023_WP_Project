@@ -129,7 +129,7 @@ services:
     # - 9113:9113
     command:
     - '-nginx.scrape-uri'
-    - ''http://${STG_WORDPRESS_WEBSITE_URL_WITHOUT_HTTP}:${STG_NGINX_PORT}/status'
+    - 'http://${STG_WORDPRESS_WEBSITE_URL_WITHOUT_HTTP}:${STG_NGINX_PORT}/status'
     # - '-web.listen-address'
     # - '9113'
     depends_on:
