@@ -484,7 +484,7 @@ La siguiente imagen muestra como sería el almacenamiento del entorno:
 
     - Resultados ejemplo prd:
 
-```        Type     Name  # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+        ```Type     Name  # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
         --------||-------|-------------|-------|-------|-------|-------|--------|-----------
         GET      /       1072     0(0.00%) |    602     100    1220    620 |   17.87        0.00
         GET      /blog/category/uncategorized/    1061     0(0.00%) |    582      97    1271    600 |   17.68        0.00
