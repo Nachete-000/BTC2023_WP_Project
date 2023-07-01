@@ -85,16 +85,16 @@ def loadtestfunction(){
     # # Check files ./locust/prd_locustfile.py and stg_locustfile.py with the message response because it's hardcoded
     # # If parameters are different for each env, ensure check response and percentile response with values for each env.
     #if [ "${ENVIRONMENT_NAME}" = "stg"]; then
-    #    export LOCUST_AVERAGE_RESPONSE=5000
-    #    export LOCUST_PERCENTILE_RESPONSE=5000
+    #    export LOCUST_AVERAGE_RESPONSE=500
+    #    export LOCUST_PERCENTILE_RESPONSE=1200
     #elif [ "${ENVIRONMENT_NAME}" = "prd" ]; then
-    #    export LOCUST_AVERAGE_RESPONSE=5000
-    #    export LOCUST_PERCENTILE_RESPONSE=5000
+    #    export LOCUST_AVERAGE_RESPONSE=400
+    #    export LOCUST_PERCENTILE_RESPONSE=1000
     #fi
 
     # Fixed values for both:
-    export LOCUST_AVERAGE_RESPONSE=5000
-    export LOCUST_PERCENTILE_RESPONSE=5000
+    export LOCUST_AVERAGE_RESPONSE=2000
+    export LOCUST_PERCENTILE_RESPONSE=2800
 
     export LOCUST_ERROR_RESULT1="Test failed due to failure ratio > 1%"
     export LOCUST_ERROR_RESULT2="Test failed due to average response time ratio > ${LOCUST_AVERAGE_RESPONSE} ms"

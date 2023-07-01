@@ -4,20 +4,17 @@ Proyecto BootCamp DevOps 2023
 
 ## Introducción
 
-Prueba técnica, consiste en automatizar una aplicación web básica.
-Independientemente del lenguaje o framework que se haya utilizado para crearla, realizaremos todo el ciclo de vida de un entorno automatizado, siguiendo el proceso
-desde que un desarrollador realiza un push sobre la rama master e inicia el proceso para ponerse automáticamente en producción.
+En este caso se ha trabajado en una PoC para el despliegue de un entorno basado en WordPress en el cual se va a ir desplegando determinada información a modo intranet, reutilizando hardware existente para un despliegue en un entorno local.
 
-## Requisitos
-
-- Para la aplicación se puede utilizar cualquier lenguaje enfocado en el desarrollo web, python, node.js, php, etc.
-- Se deberá disponer de un sistema de integración continua, utilizando git, mediante repositorios en github, bitbucket, etc.
-- Las aplicaciones deben estar correctamente dockerizadas, separando la app de la base de datos. Podemos disponer de un front, un back y la bd en tres
-contenedores distintos o, también, un modelo más simplificado en un contenedor y disponer de los tres elementos. En este caso, el/la alumno puede decidir qué escoger.
-- Se utilizará algún orquestador de contenedores para la gestión, tal como puede ser docker-swarm, docker-compose o kubernetes. Se deberá poder lanzar los procesos en local para comprobar el correcto funcionamiento del mismo.
-- Se dispondrá del sistema automatizado de despliegue con los pipelines suficientes, ya sea utilizando jenkins, jenkinsX u otros como CircleCi.
-- Se dispondrá de un panel para la motorización de la aplicación (errores, funcionamiento del mismo), si se utiliza docker no es suficiente con utilizar portainer o con k8 cualquier aplicación de visualización minikube etc.. Se debe disponer de un sistema de recogida de información de los contenedores y exposición de los datos del mismo, sobre grafana, kibana o similar.
-- Junto con el Proyecto Final, se deberá presentar una memoria donde se justifiquen las decisiones adoptadas y con una clara explicación de la misma.
+Otros requisitos a cumplir:
+- Sistema de integración continua, usando git mediante repositorios, se utiliza GitHub ya que se está utilizando para otros proyectos, así se unifican los entornos corporativos. Al modificar sobre la rama "main", se realizará el despliegue del entorno de pre, staging y producción.
+- Aplicaciones dockerizadas, separando bbdd, back-end y front-end.
+- Orquestador de contenedores: docker compose para dev y stg, docker swarm para prd.
+    - Al tratarse de una prueba de concepto del entorno,, se ha elegido la solución para poder hacer un despliegue local de la forma mas simple posible con la posibilidad de un escalado en nodos aunque sea de forma manual al menos para el entorno de producción.
+- Sistema automatizado de despliegue: Jenkins, idem, por facilitar el despliegue local.
+- Panel de monitorización:
+    - Prometheus que recopila la información de contenedores, bases de datos y frontal.
+    - Grafana, que visualiza la información mostrada por Prometheus.
 
 ## Nomenclatura
 
@@ -29,6 +26,7 @@ contenedores distintos o, también, un modelo más simplificado en un contenedor
 
 - Entorno local con Docker
     - Instalación https://docs.docker.com/engine/install/ubuntu/
+    - GitHub
     - Solución a problemas de permisos: https://stackoverflow.com/questions/48957195/how-to-fix-docker-got-permission-denied-issue
     - El entorno se ha probado en:
         - Ubuntu 22 LTS
@@ -37,10 +35,9 @@ contenedores distintos o, también, un modelo más simplificado en un contenedor
 ## Entorno
 
 ### Git
-- Se utiliza GitHub como repositorio de código en la rama:
-    - main --> al modificar sobre esta rama se realizará el despliegue del entorno, salvo error de alguno de los elementos.
-- Para el despliegue de la solución integrado con Git se utiliza Jenkins, que requiere configuración previa (se describe el proceso más adelante).
-    - A través del trabajo multibranch Jenkins despliegua desde la rama 'main' los 3 entornos.
+- Se utiliza GitHub y como rama de despliegue es la rama "main", que al realiar una pull request sobre esta rama se realizará el despliegue del entorno, salvo error de alguno de los elementos.
+- Para el despliegue de la solución integrado con Git se utiliza Jenkins, que requiere configuración previa (se describe el proceso de configuración). El proceso de Jenkins sería el siguiente
+    - A través del trabajo multibranch Jenkins despliega desde la rama 'main' los 3 entornos.
     ![Jenkins Pipeline](./Readme/img/jenkins_pipeline.jpg)
     - También se encarga de desplegar las variables de entorno para los contenedores docker.
     - Despliega las contraseñas a través de su gestor de credenciales a los distintos contenedores.
@@ -54,7 +51,7 @@ Para la monitorización del entorno se utilizan los siguientes elementos:
 - 2 x exporter para mysql/mariadb (stg & prd)
 - 2 x exporter para nginx (stg & prd)
 - plugin para wordpress que se publica vía nginx (stg & prd)
-- La información se muestra a gravés de Grafana.
+- La información se muestra a gravés de Grafana a través de varios dashboard preconfigurados.
 
 ## Aplicación 
 
@@ -73,9 +70,9 @@ Para la monitorización del entorno se utilizan los siguientes elementos:
         - Jenkins: http://<ip_address>:8080
         - Registry: http://<ip_address>:5000
         - Prometheus: http://<ip_address>:9090
-- En una instalación por defecto, WordPress nos pide seleccionar idioma y a continuación usuario admin, contraseña y dirección de e-mail, una vez instalado, muestra por defecto una página web:
+- En una instalación por defecto, WordPress nos pide seleccionar idioma y a continuación varias parametrizaciones, como: usuario admin, contraseña y dirección de e-mail, una vez instalado, muestra por defecto una página web:
 ![WordPress default web page](./Readme/img/default_wordpress_install.jpg)
-- La solución despliga y configura el entorno con una serie de valores establecidos, idioma, titulo del sitio, configuración de reescritura de urls, usuario, contraseña del administrador, plug-ins, temas, etc, para que no sea necesaria una personalización manual de ninguno de los elementos en cualquiera de los entornos, dev, stg o prd.
+- La solución despliga y configura el entorno con una serie de valores establecidos, idioma, titulo del sitio, configuración de reescritura de urls, usuario, contraseña del administrador, plug-ins, temas, etc, para que no sea necesaria una personalización manual de ninguno de los elementos en cualquiera de los entornos, dev, stg o prd. Se han personalizado las imágenes por defecto para poder gestionar la creación de contenido de los entornos así como para parametrizar las configuraciones. Para muchas de las personalizaciones se han utilizado comandos shell o del cliente wp-cli de WordPress para poder automatizar las tareas.
 
 ### - Entorno dev
 
@@ -162,9 +159,9 @@ Para la monitorización del entorno se utilizan los siguientes elementos:
         - nginx: 3
         - wp-cli: 1
 
-- Una vez finalizado se realiza una prueba de carga vía locust, generando peticiones al entorno durante un breve tiempo.
+- Una vez finalizado se realiza una prueba de carga vía locust, generando peticiones al entorno durante un breve tiempo, que permiten validar la viabilidad de carga del entorno.
 
-## Configuración del entorno
+## Configuración / despliegue del entorno
 
 ### - Resolución de nombres:
 
@@ -226,14 +223,23 @@ Para la monitorización del entorno se utilizan los siguientes elementos:
 ## Ejecución
 
 ### Despliegue inicial
-- Instalar docker y revisar que tengamos permisos.
+
+- Instalar docker y revisar que tengamos permisos para poder ejecutar.
 - Asegurarse que los script shell tienen permisos +x si se ejecuta desde linux: `chmod 755 ./start-deploy.sh ./stop-deploy.sh ./start-standalone.sh ./stop-standalone.sh`
 - Ejecutar el fichero: `./start-deploy.sh`
-- Se puede ejecutar la aplicación en un entorno local sin CI/CD ejecutando `./start-standalone.sh`, esto lanza la bbdd, wordpress, nginx, el cliente wp-cli para configurar y el wp-cli-test para generar contenido. Para finalizar el entorno `./stopd-standalone.sh`
+- Se puede ejecutar la aplicación en un entorno local sin CI/CD ejecutando `./start-standalone.sh`, esto lanza la bbdd, wordpress, nginx, el cliente wp-cli para configurar y el wp-cli-test para generar contenido. Para finalizar el entorno `./stopd-standalone.sh`. En este caso no tendremos CI/CD ni monitorización, pero nos permitirá poder probar y desarrollar sobre el entorno.
+
 - El fichero start-deploy.sh realiza lo siguiente:
     - Solicita credenciales para el usuario admin de Grafana, y la establece en el fichero `/grafana/grafana_admin_pwd` que docker compose la obtiene como secreto de la ruta
     - Despliega Jenkins y facilita la contraseña de admin para el proceso de instalación.
     - Arranca el registro de imagenes
+- El fichero stop-deploy.sh realiza lo siguiente:
+    - Pregunta previamente como realizar las acciones.
+    - Deshabilita los servicios de docker swarm.
+    - Realiza un docker compose down de todos los servicios.
+    - Elimina las redes.
+    - Elimina las credenciales de Grafana.
+    - Muestra información para eliminar los volúmenes, pero no los elimina automáticamente.
 
 ### Configuración de jenkins
 
@@ -367,16 +373,16 @@ La siguiente imagen muestra como sería el almacenamiento del entorno:
     - red overlay para los elementos de producción.
 - svc-net
     - red para servicios transversales (jenkins, registry)
-- mon
+- mon-net
     - red de Grafana, exporters para Prometheus y Prometheus, así como los contenedores de stg antes mencionados.
 
 - El siguiente esquema simplifica como se gestiona el tráfico en prd.
 ![Network Traffic](./Readme/img/prd_network_port_access.jpg)
 
 ## Puntos de mejora / Pendientes / Conclusiones
-- Base de datos
-    - Sin alta disponibilidad ni redundancia
-    - Sería recomendable configurar al menos un cluster de 2 o 3 nodos, eso permitiría actualizaciones no disruptivas sobre el contenedor de la BBDD.
+
+- Base de datos, sin alta disponibilidad ni redundancia para el entorno productivo:
+    - Sería recomendable configurar al menos un cluster de 2 o 3 nodos replicados, uno de ellos sería R/W y los otros R/O, eso permitiría actualizaciones no disruptivas sobre el contenedor de la BBDD.
     - Limitar la exposición del puerto 3306 de la base de datos al exterior para su monitorización y que no sea accesible desde el exterior, actualmente se utiliza para el exporter de monitorización.
 
 - Monitorización del entorno:
@@ -384,21 +390,21 @@ La siguiente imagen muestra como sería el almacenamiento del entorno:
     - Cadvisor, se ha implementado, aunque sería prescindible aunque esta solución a fecha de hoy está en fase de desarrollo: https://docs.docker.com/config/daemon/prometheus/
 
 - Seguridad
-    - Cifrado
+    - Cifrado para el entorno productivo
         - No hay un despliegue de certificados ni uso de https como protocolos de acceso.
         - Tampoco hay cifrado en el transporte de las comunicaciones de las BBDD.
-        - Sería recomendable implementar https y cifrado TLS en las comunicaciones con algoritmo de cifrados actuales.
+        - Sería recomendable implementar https y cifrado TLS 1.2 en las comunicaciones con algoritmo de cifrados actuales soportados.
         - La entrega de certificados debería gestionarse de forma segura con alguna gestión de secretos/contraseñas.
     - Gestión de contraseñas y secretos
         - Mejorarlo con un gestor de contraseñas externo, se ha utilizado Jenkins por unificar los elementos del entorno local.
         - Por simplificar la configuración del despliegue en Jenkins y a modo muestra, se han utilizado las mismas credenciales para los distintos entornos, pero sería recomendable utilizar contraseñas distintas para cada uno de ellos.
         - Se ha utilizado docker secrets en Grafana para no utilizar un fichero con variables de entorno con contraseñas y evitar propagación a otros contenedores, pero al almacenarse en fichero con texto plano no da una capa de seguridad adicional al menos en docker-compose.
         - Mejorar el despliegue de Jenkins, para evitar la solicitud de aprobación de scripts.
-        - En la medida de lo posible, se ha tratado de otorgar los mínimos privilegios posibles a los usuarios/servicios como por ej. al usuario exporter de mysql para Prometheus.
+        - En la medida de lo posible, se ha tratado de otorgar los mínimos privilegios posibles a los usuarios/servicios así como no hardcodear usuarios y contraeñas en el código, como por ej. al usuario exporter de mysql para Prometheus.
     - Gestión de logs y trazabilidad de eventos
         - No se ha incluido la parte de gestión de logs del entorno. Es una tarea pendiente.
     - Puesta en marcha del entorno
-        - Se ha intentado que en la puesta en marcha el usuario final tenga que realizar la mínima parte del despliegue y configuración del entorno, aunque como se ha comentado, requiere una configuración de Jenkins para el despliegue.
+        - Se ha intentado que en la puesta en marcha el usuario final tenga que realizar la mínima parte del despliegue y configuración del entorno, aunque como se ha comentado, requiere de seguir una seire de pasos para configurar el despliegue completo con Jenkins.
         - Automatizar el proceso de configuración de Jenkins, también como mejora.
     - Uso de variables
         - Se ha intentado gestionar los entornos con el uso de variables para simplificar futuras configuraciones, usos o aplicaciones para poder personalizar o trasladar el entorno.
@@ -416,7 +422,7 @@ La siguiente imagen muestra como sería el almacenamiento del entorno:
     - Determina 3 posibles errores:
         - Tasa de error de peticiones totales > 1%
         - Respuesta media > 5s
-        - Percentil 95% > 5s
+        - Percentil 95% > 5,5s
     - Se define en este punto, aunque es compartido con el punto anterior de uso de variables:
         - Estaría pendiente mejorar la parte de python con la parte de pruebas de carga y disponer de esos valores unificados y configurar el input con una variable, tanto para el fichero de jenkinsfile como para los ficheros .py que usa Locust.
         - Sería recomendable utilizar variables para la gestión y no valores fijos en el código tal y como está ahora.
