@@ -443,7 +443,7 @@ La siguiente imagen muestra como sería el almacenamiento del entorno:
     ![Jenkins Pipeline](./Readme/img/loadtest_cpu_host_result.jpeg)
     - Resultado ejemplo stg:
 
-```        Type     Name  # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+        ```Type     Name  # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
         --------||-------|-------------|-------|-------|-------|-------|--------|-----------
         GET      /        189     0(0.00%) |    974     139    1404   1100 |    3.15        0.00
         GET      /blog/category/contentstg1     185     0(0.00%) |    958     113    1390   1100 |    3.08        0.00
