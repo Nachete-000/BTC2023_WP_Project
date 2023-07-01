@@ -44,7 +44,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
           },
           "custom": {
             "axisCenteredZero": false,
@@ -86,7 +86,7 @@
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 22
               }
             ]
           }
@@ -138,7 +138,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "fixedColor": "blue",
+            "mode": "thresholds"
           },
           "custom": {
             "axisCenteredZero": false,
@@ -175,12 +176,12 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "blue",
                 "value": null
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 25
               }
             ]
           }
@@ -193,8 +194,8 @@
         "x": 12,
         "y": 0
       },
-      "id": 7,
-      "interval": "1",
+      "id": 11,
+      "interval": "1s",
       "options": {
         "legend": {
           "calcs": [],
@@ -214,10 +215,9 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "editorMode": "builder",
+          "editorMode": "code",
           "expr": "rate(nginx_http_requests_total{instance=\"stg_nginx-exporter:9113\"}[$__rate_interval])",
-          "hide": false,
-          "legendFormat": "STG NGINX Request/min",
+          "legendFormat": "PRDNGINX Request/s",
           "range": true,
           "refId": "STGNGINX Request/s"
         }
@@ -336,7 +336,7 @@
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 16
               }
             ]
           }
@@ -408,7 +408,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "blue",
                 "value": null
               }
             ]
@@ -461,7 +461,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "fixedColor": "blue",
+            "mode": "thresholds"
           },
           "custom": {
             "axisCenteredZero": false,
@@ -498,12 +499,12 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "blue",
                 "value": null
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 16
               }
             ]
           }
@@ -516,7 +517,7 @@
         "x": 16,
         "y": 8
       },
-      "id": 8,
+      "id": 12,
       "options": {
         "legend": {
           "calcs": [],
@@ -536,7 +537,7 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "editorMode": "builder",
+          "editorMode": "code",
           "expr": "nginx_connections_active{instance=\"stg_nginx-exporter:9113\"}",
           "hide": false,
           "legendFormat": "STG NGINX Active Connections",
@@ -548,7 +549,7 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "editorMode": "builder",
+          "editorMode": "code",
           "expr": "nginx_connections_waiting{instance=\"stg_mysqld-exporter:9113\"}",
           "hide": false,
           "legendFormat": "STG NGINX Waiting Connections",
