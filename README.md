@@ -352,7 +352,7 @@ Para la monitorización del entorno se utilizan los siguientes elementos:
 - Prometheus
     - usa también un volumen persistente para almacenar los datos.
 
-La siguiente imagen muestra como sería el almacenamiento del entorno de prd.
+La siguiente imagen muestra como sería el almacenamiento del entorno:
 
 ![Storage access prd](./Readme/img/prd_storage_access.jpg)
 
@@ -425,8 +425,8 @@ La siguiente imagen muestra como sería el almacenamiento del entorno de prd.
         - En el entorno de stg que solo hay un nodo backend de WordPress dispara la CPU del host. A tener en cuenta que el entorno de stg se realizan consultas por categorías.
         - En el enotrno de prd que hay 3 nodos backend de WordPress, la carga de CPU del host donde se ejecuta es similar en ambos casos, pero se puede observar como se reparte la carga entre los 3 contenedores. A tener en cuenta que hay menos contenido de consulta, pero se producen unas 1300 consultas sobre la BBDD en cada caso.
         - En este caso como conclusión al cuello de botella en este caso estaría en el host, de ahí los tiempos de respuesta elevados, estos tiempos se han mejorado haciendo un escalado vertical de la máquina (añadiendo más vCPU)
-        - Como mejora sería la implementación en una solución cloud con un autoescalado de los elementos.
-        - Si se ejecuta localmente dependerá de la máquina y capacidad de proceso, se recomienda revisar los valores en los ficheros ./prd_locustfile.py y ./stg_locustfile.py así como los mensajes de output, también los valores en el fichero ./Jenkinsfile línea: `export LOCUST_AVERAGE_RESPONSE=5000` y `export LOCUST_PERCENTILE_RESPONSE=5000`, o bien comentar las líneas del fichero ./Jenkinsfile que contienen el if/elif que hacen alusión a las condiciones de la función loadtestfunction() comentandolas con un # para que no apliquen.
+        - Como mejora sería la implementación en una solución cloud con un autoescalado de los elementos, también se podría utilizar otro nodo que gestionara Jenkins donde desplegar Locust con los workers y master.
+        - Si se ejecuta localmente dependerá de la máquina y capacidad de proceso de la misma, se recomienda revisar los valores en los ficheros ./prd_locustfile.py y ./stg_locustfile.py así como los mensajes de output, también los valores en el fichero ./Jenkinsfile línea: `export LOCUST_AVERAGE_RESPONSE=5000` y `export LOCUST_PERCENTILE_RESPONSE=5000`, o bien comentar las líneas del fichero ./Jenkinsfile que contienen el if/elif que hacen alusión a las condiciones de la función loadtestfunction() comentandolas con un # para que no apliquen. 
         - Las pruebas actuales se realizan con 50 usuarios durante 90 seg y los valores configurados son 5000ms.
 
     ![Jenkins Pipeline](./Readme/img/loadtest_cpu_container_result.jpeg)

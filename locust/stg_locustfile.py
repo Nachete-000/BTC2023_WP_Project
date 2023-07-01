@@ -15,7 +15,7 @@ class wp(HttpUser):
         self.client.get("/blog/category/contentstg8/")
         self.client.get("/blog/category/contentstg9/")
         self.client.get("/blog/category/contentstg10/")
-        self.client.get("blog/category/uncategorized/")
+        self.client.get("/blog/category/uncategorized/")
 
 import logging
 from locust import events
