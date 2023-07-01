@@ -427,66 +427,82 @@ La siguiente imagen muestra como sería el almacenamiento del entorno:
         - Estaría pendiente mejorar la parte de python con la parte de pruebas de carga y disponer de esos valores unificados y configurar el input con una variable, tanto para el fichero de jenkinsfile como para los ficheros .py que usa Locust.
         - Sería recomendable utilizar variables para la gestión y no valores fijos en el código tal y como está ahora.
     - Docker swarm no dispone de autoescalado.
-    - Independientemente del autoescalado, como problema se ha detectado que al realizar las pruebas de carga, el backend de WordPress hace que la CPU del host al 100% de uso con 50 usuarios de prueba, esto hace que se disparen los tiempos de respuesta en los resultados.
+    - Independientemente del autoescalado, como problema se ha detectado que al realizar las pruebas de carga, el backend de WordPress hace que la CPU del host por debajo se ponga 100% de uso a partir de 50 usuarios de prueba, esto hace que se disparen los tiempos de respuesta en los resultados.
         - En el entorno de stg que solo hay un nodo backend de WordPress dispara la CPU del host. A tener en cuenta que el entorno de stg se realizan consultas por categorías.
         - En el enotrno de prd que hay 3 nodos backend de WordPress, la carga de CPU del host donde se ejecuta es similar en ambos casos, pero se puede observar como se reparte la carga entre los 3 contenedores. A tener en cuenta que hay menos contenido de consulta, pero se producen unas 1300 consultas sobre la BBDD en cada caso.
-        - En este caso como conclusión al cuello de botella en este caso estaría en el host, de ahí los tiempos de respuesta elevados, estos tiempos se han mejorado haciendo un escalado vertical de la máquina (añadiendo más vCPU)
-        - Como mejora sería la implementación en una solución cloud con un autoescalado de los elementos, también se podría utilizar otro nodo que gestionara Jenkins donde desplegar Locust con los workers y master.
-        - Si se ejecuta localmente dependerá de la máquina y capacidad de proceso de la misma, se recomienda revisar los valores en los ficheros ./prd_locustfile.py y ./stg_locustfile.py así como los mensajes de output, también los valores en el fichero ./Jenkinsfile línea: `export LOCUST_AVERAGE_RESPONSE=5000` y `export LOCUST_PERCENTILE_RESPONSE=5000`, o bien comentar las líneas del fichero ./Jenkinsfile que contienen el if/elif que hacen alusión a las condiciones de la función loadtestfunction() comentandolas con un # para que no apliquen. 
-        - Las pruebas actuales se realizan con 50 usuarios durante 90 seg y los valores configurados son 5000ms.
+        - La cpu del contenedor de bbdd no supera el 50% de uso
+        - En este caso como conclusión al cuello de botella en este caso estaría en el host, de ahí los tiempos de respuesta elevados, estos tiempos se han mejorado haciendo un escalado vertical de la máquina añadiendo más vCPU.
+        - Como mejora principal:
+            Implementación en una solución cloud con un autoescalado de los elementos
+        - Como mejora alternativa:
+            - Distribuir entre más hardware la solución e incluso utilizar otro nodos que gestione Jenkins donde desplegar Locust con los workers y master.
+            - Si se ejecuta localmente dependerá de la máquina y capacidad de proceso de la máquina host, se recomienda revisar los valores en los ficheros ./prd_locustfile.py y ./stg_locustfile.py así como los mensajes de output, también los valores en el fichero ./Jenkinsfile línea: `export LOCUST_AVERAGE_RESPONSE=2000` y `export LOCUST_PERCENTILE_RESPONSE=2800`, o bien comentar las líneas del fichero ./Jenkinsfile que contienen el if/elif que hacen alusión a las condiciones de la función loadtestfunction() comentandolas con un # para que no apliquen. 
+            - Las pruebas actuales se realizan con 50 usuarios durante 60 seg y los valores configurados son 2000ms de media y 2800ms para el percentil del 95. Unos valores altos para la respuesta de la web.
 
     ![Jenkins Pipeline](./Readme/img/loadtest_cpu_container_result.jpeg)
     ![Jenkins Pipeline](./Readme/img/loadtest_cpu_host_result.jpeg)
     - Resultado ejemplo stg:
-    ```Type     Name  # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
-    --------||-------|-------------|-------|-------|-------|-------|--------|-----------
-    GET      /        221     0(0.00%) |   1441     157    2217   1800 |    2.46        0.00
-    GET      /blog/category/contentstg1/     216     0(0.00%) |   1438     126    2280   1700 |    2.40        0.00
-    GET      /blog/category/contentstg10/     176     0(0.00%) |   1530     130    2162   1800 |    1.96        0.00
-    GET      /blog/category/contentstg2/     212     0(0.00%) |   1452     136    2304   1800 |    2.36        0.00
-    GET      /blog/category/contentstg3/     206     0(0.00%) |   1445     133    2240   1800 |    2.29        0.00
-    GET      /blog/category/contentstg4/     203     0(0.00%) |   1457     131    2184   1800 |    2.26        0.00
-    GET      /blog/category/contentstg5/     199     0(0.00%) |   1481     133    2150   1800 |    2.21        0.00
-    GET      /blog/category/contentstg6/     194     0(0.00%) |   1487     131    2269   1800 |    2.16        0.00
-    GET      /blog/category/contentstg7/     191     0(0.00%) |   1510     146    2224   1800 |    2.12        0.00
-    GET      /blog/category/contentstg8/     184     0(0.00%) |   1501     132    2261   1800 |    2.04        0.00
-    GET      /blog/category/contentstg9/     181     0(0.00%) |   1516     134    2292   1800 |    2.01        0.00
-    --------||-------|-------------|-------|-------|-------|-------|--------|-----------
-            Aggregated    2183     0(0.00%) |   1476     126    2304   1800 |   24.26        0.00
 
-    Response time percentiles (approximated)
-    Type     Name      50%    66%    75%    80%    90%    95%    98%    99%  99.9% 99.99%   100% # reqs
-    --------||--------|------|------|------|------|------|------|------|------|------|------|------
-    GET      /     1800   1900   2000   2000   2100   2100   2200   2200   2200   2200   2200    221
-    GET      /blog/category/contentstg1/     1700   1800   1900   2000   2100   2100   2100   2100   2300   2300   2300    216
-    GET      /blog/category/contentstg10/     1800   1900   2000   2000   2000   2100   2100   2200   2200   2200   2200    176
-    GET      /blog/category/contentstg2/     1800   1900   2000   2000   2100   2100   2100   2200   2300   2300   2300    212
-    GET      /blog/category/contentstg3/     1800   1900   1900   2000   2100   2100   2100   2200   2200   2200   2200    206
-    GET      /blog/category/contentstg4/     1800   1900   1900   2000   2000   2100   2100   2100   2200   2200   2200    203
-    GET      /blog/category/contentstg5/     1800   1900   2000   2000   2100   2100   2100   2100   2200   2200   2200    199
-    GET      /blog/category/contentstg6/     1800   1900   1900   2000   2000   2100   2200   2200   2300   2300   2300    194
-    GET      /blog/category/contentstg7/     1800   1900   2000   2000   2100   2100   2200   2200   2200   2200   2200    191
-    GET      /blog/category/contentstg8/     1800   1900   1900   2000   2000   2100   2100   2200   2300   2300   2300    184
-    GET      /blog/category/contentstg9/     1800   1900   2000   2000   2100   2100   2100   2200   2300   2300   2300    181
-    --------||--------|------|------|------|------|------|------|------|------|------|------|------
-            Aggregated     1800   1900   2000   2000   2100   2100   2100   2200   2300   2300   2300   2183
-    ```
+```        Type     Name  # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+        --------||-------|-------------|-------|-------|-------|-------|--------|-----------
+        GET      /        189     0(0.00%) |    974     139    1404   1100 |    3.15        0.00
+        GET      /blog/category/contentstg1     185     0(0.00%) |    958     113    1390   1100 |    3.08        0.00
+        GET      /blog/category/contentstg10/     152     0(0.00%) |   1039     130    1382   1200 |    2.53        0.00
+        GET      /blog/category/contentstg2/     179     0(0.00%) |    978     126    1396   1200 |    2.98        0.00
+        GET      /blog/category/contentstg3/     173     0(0.00%) |    980     129    1368   1200 |    2.88        0.00
+        GET      /blog/category/contentstg4/     172     0(0.00%) |    991     147    1369   1200 |    2.87        0.00
+        GET      /blog/category/contentstg5/     168     0(0.00%) |    989     112    1382   1200 |    2.80        0.00
+        GET      /blog/category/contentstg6/     164     0(0.00%) |   1010     149    1356   1200 |    2.73        0.00
+        GET      /blog/category/contentstg7/     161     0(0.00%) |   1019     142    1398   1200 |    2.68        0.00
+        GET      /blog/category/contentstg8/     156     0(0.00%) |   1022     136    1365   1200 |    2.60        0.00
+        GET      /blog/category/contentstg9/     156     0(0.00%) |   1041     140    1372   1200 |    2.60        0.00
+        GET      /blog/category/uncategorized/     148     0(0.00%) |   1037     133    1396   1200 |    2.47        0.00
+        GET      /privacy-policy/     193     0(0.00%) |    918      91    1347   1100 |    3.22        0.00
+        GET      /what-is-devops     198     0(0.00%) |    906      93    1350   1100 |    3.30        0.00
+        --------||-------|-------------|-------|-------|-------|-------|--------|-----------
+                Aggregated    2394     0(0.00%) |    987      91    1404   1200 |   39.92        0.00
+
+        Response time percentiles (approximated)
+        Type     Name      50%    66%    75%    80%    90%    95%    98%    99%  99.9% 99.99%   100% # reqs
+        --------||--------|------|------|------|------|------|------|------|------|------|------|------
+        GET      /     1100   1200   1200   1300   1300   1300   1400   1400   1400   1400   1400    189
+        GET      /blog/category/contentstg1     1100   1200   1200   1300   1300   1300   1400   1400   1400   1400   1400    185
+        GET      /blog/category/contentstg10/     1200   1200   1300   1300   1300   1300   1400   1400   1400   1400   1400    152
+        GET      /blog/category/contentstg2/     1200   1200   1200   1300   1300   1300   1400   1400   1400   1400   1400    179
+        GET      /blog/category/contentstg3/     1200   1200   1300   1300   1300   1300   1400   1400   1400   1400   1400    173
+        GET      /blog/category/contentstg4/     1200   1200   1300   1300   1300   1300   1400   1400   1400   1400   1400    172
+        GET      /blog/category/contentstg5/     1200   1200   1200   1200   1300   1300   1300   1400   1400   1400   1400    168
+        GET      /blog/category/contentstg6/     1200   1200   1200   1300   1300   1300   1400   1400   1400   1400   1400    164
+        GET      /blog/category/contentstg7/     1200   1200   1300   1300   1300   1300   1400   1400   1400   1400   1400    161
+        GET      /blog/category/contentstg8/     1200   1200   1300   1300   1300   1300   1300   1400   1400   1400   1400    156
+        GET      /blog/category/contentstg9/     1200   1200   1300   1300   1300   1300   1400   1400   1400   1400   1400    156
+        GET      /blog/category/uncategorized/     1200   1200   1300   1300   1300   1300   1300   1400   1400   1400   1400    148
+        GET      /privacy-policy/     1100   1200   1200   1200   1300   1300   1300   1300   1300   1300   1300    193
+        GET      /what-is-devops     1100   1200   1200   1200   1300   1300   1300   1300   1400   1400   1400    198
+        --------||--------|------|------|------|------|------|------|------|------|------|------|------
+                Aggregated     1200   1200   1200   1300   1300   1300   1400   1400   1400   1400   1400   2394
+        ```
 
     - Resultados ejemplo prd:
 
-    ```
-    Type     Name  # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
-    --------||-------|-------------|-------|-------|-------|-------|--------|-----------
-    GET      /       2883     0(0.00%) |   1118      96    2655   1100 |   32.03        0.00
-    --------||-------|-------------|-------|-------|-------|-------|--------|-----------
-            Aggregated    2883     0(0.00%) |   1118      96    2655   1100 |   32.03        0.00
+```        Type     Name  # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+        --------||-------|-------------|-------|-------|-------|-------|--------|-----------
+        GET      /       1072     0(0.00%) |    602     100    1220    620 |   17.87        0.00
+        GET      /blog/category/uncategorized/    1061     0(0.00%) |    582      97    1271    600 |   17.68        0.00
+        GET      /privacy-policy/    1091     0(0.00%) |    522      87    1126    530 |   18.18        0.00
+        GET      /what-is-devops/    1100     0(0.00%) |    488      79    1061    480 |   18.33        0.00
+        --------||-------|-------------|-------|-------|-------|-------|--------|-----------
+                Aggregated    4324     0(0.00%) |    548      79    1271    560 |   72.07        0.00
 
-    Response time percentiles (approximated)
-    Type     Name      50%    66%    75%    80%    90%    95%    98%    99%  99.9% 99.99%   100% # reqs
-    --------||--------|------|------|------|------|------|------|------|------|------|------|------
-    GET      /     1100   1300   1500   1600   2000   2200   2300   2400   2600   2700   2700   2883
-    --------||--------|------|------|------|------|------|------|------|------|------|------|------
-            Aggregated     1100   1300   1500   1600   2000   2200   2300   2400   2600   2700   2700   2883
+        Response time percentiles (approximated)
+        Type     Name      50%    66%    75%    80%    90%    95%    98%    99%  99.9% 99.99%   100% # reqs
+        --------||--------|------|------|------|------|------|------|------|------|------|------|------
+        GET      /      620    720    780    820    920   1000   1100   1100   1200   1200   1200   1072
+        GET      /blog/category/uncategorized/      600    700    750    800    890    940   1000   1100   1200   1300   1300   1061
+        GET      /privacy-policy/      530    610    670    710    810    910    980   1000   1100   1100   1100   1091
+        GET      /what-is-devops/      480    570    640    680    790    840    920    990   1000   1100   1100   1100
+        --------||--------|------|------|------|------|------|------|------|------|------|------|------
+                Aggregated      560    650    720    750    850    930   1000   1100   1200   1300   1300   4324
     ```
 
 ## Recursos adicionales
