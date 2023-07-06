@@ -227,7 +227,7 @@ Para la monitorización del entorno se utilizan los siguientes elementos:
 - Instalar docker y revisar que tengamos permisos para poder ejecutar.
 - Asegurarse que los script shell tienen permisos +x si se ejecuta desde linux: `chmod 755 ./start-deploy.sh ./stop-deploy.sh ./start-standalone.sh ./stop-standalone.sh`
 - Ejecutar el fichero: `./start-deploy.sh`
-- Se puede ejecutar la aplicación en un entorno local sin CI/CD ejecutando `./start-standalone.sh`, esto lanza la bbdd, wordpress, nginx, el cliente wp-cli para configurar y el wp-cli-test para generar contenido. Para finalizar el entorno `./stopd-standalone.sh`. En este caso no tendremos CI/CD ni monitorización, pero nos permitirá poder probar y desarrollar sobre el entorno.
+- Se puede ejecutar la aplicación en un entorno local sin CI/CD ejecutando `./start-standalone.sh`, esto lanza la bbdd, wordpress, nginx, el cliente wp-cli para configurar y el wp-cli-test para generar contenido. Para finalizar el entorno `./stop-standalone.sh`. En este caso no tendremos CI/CD ni monitorización, pero nos permitirá poder probar y desarrollar sobre el entorno.
 
 - El fichero start-deploy.sh realiza lo siguiente:
     - Solicita credenciales para el usuario admin de Grafana, y la establece en el fichero `/grafana/grafana_admin_pwd` que docker compose la obtiene como secreto de la ruta
