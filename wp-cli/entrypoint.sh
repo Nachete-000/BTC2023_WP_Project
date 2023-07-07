@@ -51,10 +51,10 @@
 	fi
 
 #### TEST PLUGINS -- Comment / uncomment next line to test deployment
-	 wp plugin deactivate hello
-	 wp plugin deactivate akismet
-	 # wp plugin activate hello
-	 # wp plugin activate akismet
+	 # wp plugin deactivate hello
+	 #wp plugin deactivate akismet
+	  wp plugin activate hello
+	  wp plugin activate akismet
 
 
 #### Update Plugins
