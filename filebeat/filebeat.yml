@@ -1,0 +1,16 @@
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      hints.enabled: true
+
+output.elasticsearch:
+  hosts: ['elasticsearch:9200']
+  protocol: "http"
+  username: elastic
+  password: "${ELASTIC_PASSWORD}"
+
+setup.kibana:
+  host: "http://kibana:5601"
+  username: elastic
+  password: "${ELASTIC_PASSWORD}"
+  protocol: "http"

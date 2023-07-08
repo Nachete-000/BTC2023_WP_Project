@@ -87,6 +87,61 @@ services:
     secrets:
       - grafana_admin_pwd
 
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${TAG}
+    container_name: elasticsearch
+    ports: ["9200:9200"]
+    labels:
+      co.elastic.logs/enabled: false
+    environment:
+      - "ELASTIC_PASSWORD=${ELASTIC_PASSWORD}"
+      - "discovery.type=single-node"
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      - "cluster.routing.allocation.disk.threshold_enabled=false"
+      - "TAKE_FILE_OWNERSHIP=1"
+    volumes:
+      - "_storage/elasticsearch/data:/usr/share/elasticsearch/data"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl --silent --fail localhost:9200/_cluster/health || exit 1",
+        ]
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${TAG}
+    container_name: kibana
+    ports: ["5601:5601"]
+    labels:
+      co.elastic.logs/enabled: false
+    environment:
+      - "ELASTIC_PASSWORD=${ELASTIC_PASSWORD}"
+    depends_on: ["elasticsearch"]
+    healthcheck:
+      test: ["CMD", "curl", "-s", "-f", "http://localhost:5601/"]
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:${TAG}
+    container_name: filebeat
+    command: --strict.perms=false -e
+    user: root
+    restart: on-failure
+    labels:
+      co.elastic.logs/enabled: false
+    environment:
+      - "ELASTIC_PASSWORD=${ELASTIC_PASSWORD}"
+    volumes:
+      - "./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro"
+      - "_storage/filebeat/data:/usr/share/filebeat/data"
+      # - "./var/log/mysql:/var/log/mysql"
+      - "/var/lib/docker/containers/:/var/lib/docker/containers/:ro"
+      - "/proc:/hostfs/proc:ro"
+      - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
+      - "/:/hostfs:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    depends_on: ["elasticsearch", "kibana"]
+
+
 volumes:
   registry: {}
   prometheus: {}
