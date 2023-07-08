@@ -486,7 +486,7 @@ pipeline {
                         usernamePassword(credentialsId: 'WPDB', usernameVariable: 'MYSQL_USER', passwordVariable: 'MYSQL_PASSWORD'),
                         usernamePassword(credentialsId: 'WPPORTAL', usernameVariable: 'WORDPRESS_ADMIN_USERNAME', passwordVariable: 'WORDPRESS_ADMIN_PASSWORD'),
                         usernamePassword(credentialsId: 'MYSQLADMIN', usernameVariable: 'MYSQL_ROOT_USER', passwordVariable: 'MYSQL_ROOT_PASSWORD'),
-                        usernamePassword(credentialsId: 'MYSQLMONUSR,', usernameVariable: 'MYSQL_MON_USER', passwordVariable: 'MYSQL_MON_PASSWORD'),
+                        usernamePassword(credentialsId: 'MYSQLMONUSR', usernameVariable: 'MYSQL_MON_USER', passwordVariable: 'MYSQL_MON_PASSWORD'),
                         usernamePassword(credentialsId: 'ELASTICUSR', usernameVariable: 'ELASTIC_USER', passwordVariable: 'ELASTIC_PASSWORD')
                         ]){
                             println "Check stack deploy ${DOCKER_SWARM_STACK_NAME}"
