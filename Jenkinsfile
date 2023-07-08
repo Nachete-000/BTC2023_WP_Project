@@ -149,6 +149,7 @@ def dockerstackdeploy(){
             docker volume create ${PRD_WP_PATH} --label ${PRD_WP_PATH}
             docker volume create ${PRD_DB_PATH} --label ${PRD_DB_PATH}
             docker volume create ${PRD_DB_BACKUP_PATH} --label ${PRD_DB_BACKUP_PATH}
+            docker volume create ${PRD_DB_LOGS_PATH} --label ${PRD_DB_LOGS_PATH}
 
             # Define temporal variables
             export ENVIRONMENT_NAME="fistdeploy"
@@ -389,6 +390,7 @@ pipeline {
         PRD_WP_PATH="wp"
         PRD_DB_PATH="db"
         PRD_DB_BACKUP_PATH="db_backup"
+        PRD_DB_LOGS_PATH="db_logs"
 
         // Test Variables
         WPINSTALLMESSAGE="Parece que ya has instalado WordPress"
@@ -422,6 +424,12 @@ pipeline {
             STG_POSTRANDOM="Y"
             // time to wait before destroy environment (seconds)
             STG_TIMETOWAIT=15
+
+        // LOGGING
+        TAG=7.16.0
+        ELASTIC_VERSION=7.16.0
+        ELASTIC_PASSWORD=elastic
+        LOG_TO=elasticsearch                // values: stdout, elasticsearch
     }
     // End environment variables
 
@@ -439,7 +447,8 @@ pipeline {
                         credentials_for_id('WPDB') == null ||
                         credentials_for_id('WPPORTAL') == null ||
                         credentials_for_id('MYSQLADMIN') == null  ||
-                        credentials_for_id('MYSQLMONUSR') == null 
+                        credentials_for_id('MYSQLMONUSR') == null ||
+                        credentials_for_id('ELASTICUSR') == null
                         )
                 }
             }
@@ -466,7 +475,8 @@ pipeline {
                         credentials_for_id('WPDB') != null &&
                         credentials_for_id('WPPORTAL') != null &&
                         credentials_for_id('MYSQLADMIN') != null &&
-                        credentials_for_id('MYSQLMONUSR') != null
+                        credentials_for_id('MYSQLMONUSR') != null &&
+                        credentials_for_id('ELASTICUSR') != null
                         )
                 }
             }
@@ -477,7 +487,8 @@ pipeline {
                         usernamePassword(credentialsId: 'WPDB', usernameVariable: 'MYSQL_USER', passwordVariable: 'MYSQL_PASSWORD'),
                         usernamePassword(credentialsId: 'WPPORTAL', usernameVariable: 'WORDPRESS_ADMIN_USERNAME', passwordVariable: 'WORDPRESS_ADMIN_PASSWORD'),
                         usernamePassword(credentialsId: 'MYSQLADMIN', usernameVariable: 'MYSQL_ROOT_USER', passwordVariable: 'MYSQL_ROOT_PASSWORD'),
-                        usernamePassword(credentialsId: 'MYSQLMONUSR', usernameVariable: 'MYSQL_MON_USER', passwordVariable: 'MYSQL_MON_PASSWORD')
+                        usernamePassword(credentialsId: 'MYSQLMONUSR,', usernameVariable: 'MYSQL_MON_USER', passwordVariable: 'MYSQL_MON_PASSWORD'),
+                        usernamePassword(credentialsId: 'ELASTICUSR', usernameVariable: 'ELASTIC_USER', passwordVariable: 'ELASTIC_PASSWORD')
                         ]){
                             println "Check stack deploy ${DOCKER_SWARM_STACK_NAME}"
                             // Call to function to check/deploy docker swarm stack config
@@ -512,7 +523,8 @@ pipeline {
                     credentials_for_id('WPDB') != null &&
                     credentials_for_id('WPPORTAL') != null &&
                     credentials_for_id('MYSQLADMIN') != null &&
-                    credentials_for_id('MYSQLMONUSR') != null
+                    credentials_for_id('MYSQLMONUSR') != null &&
+                    credentials_for_id('ELASTICUSR') != null
                     }
                 }
             steps {
@@ -522,7 +534,8 @@ pipeline {
                         usernamePassword(credentialsId: 'WPDB', usernameVariable: 'MYSQL_USER', passwordVariable: 'MYSQL_PASSWORD'),
                         usernamePassword(credentialsId: 'WPPORTAL', usernameVariable: 'WORDPRESS_ADMIN_USERNAME', passwordVariable: 'WORDPRESS_ADMIN_PASSWORD'),
                         usernamePassword(credentialsId: 'MYSQLADMIN', usernameVariable: 'MYSQL_ROOT_USER', passwordVariable: 'MYSQL_ROOT_PASSWORD'),
-                        usernamePassword(credentialsId: 'MYSQLMONUSR', usernameVariable: 'MYSQL_MON_USER', passwordVariable: 'MYSQL_MON_PASSWORD')
+                        usernamePassword(credentialsId: 'MYSQLMONUSR', usernameVariable: 'MYSQL_MON_USER', passwordVariable: 'MYSQL_MON_PASSWORD'),
+                        usernamePassword(credentialsId: 'ELASTICUSR', usernameVariable: 'ELASTIC_USER', passwordVariable: 'ELASTIC_PASSWORD')
                         ]){
                             println "Deploying ${ENVIRONMENT_NAME} environment"
                             println "WordPress Portal user: ${WORDPRESS_ADMIN_USERNAME}"
@@ -576,7 +589,8 @@ pipeline {
                     credentials_for_id('WPDB') != null &&
                     credentials_for_id('WPPORTAL') != null &&
                     credentials_for_id('MYSQLADMIN') != null &&
-                    credentials_for_id('MYSQLMONUSR') != null
+                    credentials_for_id('MYSQLMONUSR') != null &&
+                    credentials_for_id('ELASTICUSR') != null
                     }
                 }
             steps {
@@ -586,7 +600,8 @@ pipeline {
                         usernamePassword(credentialsId: 'WPDB', usernameVariable: 'MYSQL_USER', passwordVariable: 'MYSQL_PASSWORD'),
                         usernamePassword(credentialsId: 'WPPORTAL', usernameVariable: 'WORDPRESS_ADMIN_USERNAME', passwordVariable: 'WORDPRESS_ADMIN_PASSWORD'),
                         usernamePassword(credentialsId: 'MYSQLADMIN', usernameVariable: 'MYSQL_ROOT_USER', passwordVariable: 'MYSQL_ROOT_PASSWORD'),
-                        usernamePassword(credentialsId: 'MYSQLMONUSR', usernameVariable: 'MYSQL_MON_USER', passwordVariable: 'MYSQL_MON_PASSWORD')
+                        usernamePassword(credentialsId: 'MYSQLMONUSR', usernameVariable: 'MYSQL_MON_USER', passwordVariable: 'MYSQL_MON_PASSWORD'),
+                        usernamePassword(credentialsId: 'ELASTICUSR', usernameVariable: 'ELASTIC_USER', passwordVariable: 'ELASTIC_PASSWORD')
                     ]){
                             println "Testing ${ENVIRONMENT_NAME} environment"
                             // Call to function test
@@ -643,7 +658,8 @@ pipeline {
                     credentials_for_id('WPDB') != null &&
                     credentials_for_id('WPPORTAL') != null &&
                     credentials_for_id('MYSQLADMIN') != null &&
-                    credentials_for_id('MYSQLMONUSR') != null
+                    credentials_for_id('MYSQLMONUSR') != null &&
+                    credentials_for_id('ELASTICUSR') != null
                     }
                 }
             steps {
@@ -653,7 +669,8 @@ pipeline {
                         usernamePassword(credentialsId: 'WPDB', usernameVariable: 'MYSQL_USER', passwordVariable: 'MYSQL_PASSWORD'),
                         usernamePassword(credentialsId: 'WPPORTAL', usernameVariable: 'WORDPRESS_ADMIN_USERNAME', passwordVariable: 'WORDPRESS_ADMIN_PASSWORD'),
                         usernamePassword(credentialsId: 'MYSQLADMIN', usernameVariable: 'MYSQL_ROOT_USER', passwordVariable: 'MYSQL_ROOT_PASSWORD'),
-                        usernamePassword(credentialsId: 'MYSQLMONUSR', usernameVariable: 'MYSQL_MON_USER', passwordVariable: 'MYSQL_MON_PASSWORD')
+                        usernamePassword(credentialsId: 'MYSQLMONUSR', usernameVariable: 'MYSQL_MON_USER', passwordVariable: 'MYSQL_MON_PASSWORD'),
+                        usernamePassword(credentialsId: 'ELASTICUSR', usernameVariable: 'ELASTIC_USER', passwordVariable: 'ELASTIC_PASSWORD')
                         ]){
                             println "Deploying ${ENVIRONMENT_NAME} environment"
                             println "WordPress Portal user: ${WORDPRESS_ADMIN_USERNAME}"
@@ -713,7 +730,8 @@ pipeline {
                     credentials_for_id('WPDB') != null &&
                     credentials_for_id('WPPORTAL') != null &&
                     credentials_for_id('MYSQLADMIN') != null &&
-                    credentials_for_id('MYSQLMONUSR') != null
+                    credentials_for_id('MYSQLMONUSR') != null &&
+                    credentials_for_id('ELASTICUSR') != null
                 }
             }
             steps {
@@ -723,7 +741,8 @@ pipeline {
                         usernamePassword(credentialsId: 'WPDB', usernameVariable: 'MYSQL_USER', passwordVariable: 'MYSQL_PASSWORD'),
                         usernamePassword(credentialsId: 'WPPORTAL', usernameVariable: 'WORDPRESS_ADMIN_USERNAME', passwordVariable: 'WORDPRESS_ADMIN_PASSWORD'),
                         usernamePassword(credentialsId: 'MYSQLADMIN', usernameVariable: 'MYSQL_ROOT_USER', passwordVariable: 'MYSQL_ROOT_PASSWORD'),
-                        usernamePassword(credentialsId: 'MYSQLMONUSR', usernameVariable: 'MYSQL_MON_USER', passwordVariable: 'MYSQL_MON_PASSWORD')
+                        usernamePassword(credentialsId: 'MYSQLMONUSR', usernameVariable: 'MYSQL_MON_USER', passwordVariable: 'MYSQL_MON_PASSWORD'),
+                        usernamePassword(credentialsId: 'ELASTICUSR', usernameVariable: 'ELASTIC_USER', passwordVariable: 'ELASTIC_PASSWORD')
                     ]){
                             println "Testing ${ENVIRONMENT_NAME} environment"
                             // Call to function test
@@ -783,7 +802,8 @@ pipeline {
                     credentials_for_id('WPDB') != null &&
                     credentials_for_id('WPPORTAL') != null &&
                     credentials_for_id('MYSQLADMIN') != null &&
-                    credentials_for_id('MYSQLMONUSR') != null
+                    credentials_for_id('MYSQLMONUSR') != null &&
+                    credentials_for_id('ELASTICUSR') != null
                 }
             }
             steps {
@@ -793,7 +813,8 @@ pipeline {
                         usernamePassword(credentialsId: 'WPDB', usernameVariable: 'MYSQL_USER', passwordVariable: 'MYSQL_PASSWORD'),
                         usernamePassword(credentialsId: 'WPPORTAL', usernameVariable: 'WORDPRESS_ADMIN_USERNAME', passwordVariable: 'WORDPRESS_ADMIN_PASSWORD'),
                         usernamePassword(credentialsId: 'MYSQLADMIN', usernameVariable: 'MYSQL_ROOT_USER', passwordVariable: 'MYSQL_ROOT_PASSWORD'),
-                        usernamePassword(credentialsId: 'MYSQLMONUSR', usernameVariable: 'MYSQL_MON_USER', passwordVariable: 'MYSQL_MON_PASSWORD')
+                        usernamePassword(credentialsId: 'MYSQLMONUSR', usernameVariable: 'MYSQL_MON_USER', passwordVariable: 'MYSQL_MON_PASSWORD'),
+                        usernamePassword(credentialsId: 'ELASTICUSR', usernameVariable: 'ELASTIC_USER', passwordVariable: 'ELASTIC_PASSWORD')
                         ]){
                             println "Deploying images to registry ${DOCKER_REGISTRY_HOST}:${DOCKER_REGISTRY_PORT}"
                             sh 'docker compose -f docker-compose.stg.yml build'
@@ -895,7 +916,8 @@ pipeline {
                     credentials_for_id('WPDB') != null &&
                     credentials_for_id('WPPORTAL') != null &&
                     credentials_for_id('MYSQLADMIN') != null &&
-                    credentials_for_id('MYSQLMONUSR') != null
+                    credentials_for_id('MYSQLMONUSR') != null &&
+                    credentials_for_id('ELASTICUSR') != null
                 }
             }
             steps {
@@ -906,6 +928,7 @@ pipeline {
                         usernamePassword(credentialsId: 'WPPORTAL', usernameVariable: 'WORDPRESS_ADMIN_USERNAME', passwordVariable: 'WORDPRESS_ADMIN_PASSWORD'),
                         usernamePassword(credentialsId: 'MYSQLADMIN', usernameVariable: 'MYSQL_ROOT_USER', passwordVariable: 'MYSQL_ROOT_PASSWORD'),
                         usernamePassword(credentialsId: 'MYSQLMONUSR', usernameVariable: 'MYSQL_MON_USER', passwordVariable: 'MYSQL_MON_PASSWORD')
+                        usernamePassword(credentialsId: 'ELASTICUSR', usernameVariable: 'ELASTIC_USER', passwordVariable: 'ELASTIC_PASSWORD')
                         ]){
                             println "Test ${ENVIRONMENT_NAME} envirnoment"
 

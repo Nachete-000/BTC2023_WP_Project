@@ -133,7 +133,7 @@ services:
     volumes:
       - "./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro"
       - "./_storage/filebeat/data:/usr/share/filebeat/data"
-      # - "./var/log/mysql:/var/log/mysql"
+      # - ${PRD_DB_LOGS_PATH}:/var/log/mysql"
       - "/var/lib/docker/containers/:/var/lib/docker/containers/:ro"
       - "/proc:/hostfs/proc:ro"
       - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
@@ -141,11 +141,11 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
     depends_on: ["elasticsearch", "kibana"]
 
-
 volumes:
   registry: {}
   prometheus: {}
   grafana: {}
+  prd_db: {}
 
 networks:
   mon-net:
