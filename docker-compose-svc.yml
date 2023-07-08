@@ -100,7 +100,7 @@ services:
       - "cluster.routing.allocation.disk.threshold_enabled=false"
       - "TAKE_FILE_OWNERSHIP=1"
     volumes:
-      - "_storage/elasticsearch/data:/usr/share/elasticsearch/data"
+      - "./_storage/elasticsearch/data:/usr/share/elasticsearch/data"
     healthcheck:
       test:
         [
