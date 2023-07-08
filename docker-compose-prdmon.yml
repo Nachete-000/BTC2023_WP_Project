@@ -72,7 +72,7 @@ services:
       - "cluster.routing.allocation.disk.threshold_enabled=false"
       - "TAKE_FILE_OWNERSHIP=1"
     volumes:
-      - "./_storage/elasticsearch/data:/usr/share/elasticsearch/data"
+      - elasticsearch:/usr/share/elasticsearch/data
     healthcheck:
       test:
         [
@@ -108,7 +108,7 @@ services:
       - "ELASTIC_PASSWORD=${ELASTIC_PASSWORD}"
     volumes:
       - "./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro"
-      - "./_storage/filebeat/data:/usr/share/filebeat/data"
+      - filebeat:/usr/share/filebeat/data
       - ${PRD_DB_LOGS_PATH}:/var/log/mysql"
       - "/var/lib/docker/containers/:/var/lib/docker/containers/:ro"
       - "/proc:/hostfs/proc:ro"
@@ -125,3 +125,5 @@ networks:
 
 volumes:
   db_logs: {}
+  elasticsearch: {}
+  filebeat: {}
