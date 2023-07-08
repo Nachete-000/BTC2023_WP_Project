@@ -426,10 +426,9 @@ pipeline {
             STG_TIMETOWAIT=15
 
         // LOGGING
-        TAG=7.16.0
-        ELASTIC_VERSION=7.16.0
-        ELASTIC_PASSWORD=elastic
-        LOG_TO=elasticsearch                // values: stdout, elasticsearch
+        TAG="7.16.0"
+        ELASTIC_VERSION="7.16.0"
+        LOG_TO="elasticsearch"                // values: stdout, elasticsearch
     }
     // End environment variables
 
