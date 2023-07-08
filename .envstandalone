@@ -79,6 +79,7 @@ STG_DB_BACKUP_PATH="stg_db_backup"
 PRD_WP_PATH="wp"
 PRD_DB_PATH="db"
 PRD_DB_BACKUP_PATH="db_backup"
+PRD_DB_LOGS_PATH="db_logs"
 
 # Test Variables
 WPINSTALLMESSAGE="Parece que ya has instalado WordPress"
