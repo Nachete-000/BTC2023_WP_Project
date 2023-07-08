@@ -132,7 +132,7 @@ services:
       - "ELASTIC_PASSWORD=${ELASTIC_PASSWORD}"
     volumes:
       - "./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro"
-      - "_storage/filebeat/data:/usr/share/filebeat/data"
+      - "./_storage/filebeat/data:/usr/share/filebeat/data"
       # - "./var/log/mysql:/var/log/mysql"
       - "/var/lib/docker/containers/:/var/lib/docker/containers/:ro"
       - "/proc:/hostfs/proc:ro"
