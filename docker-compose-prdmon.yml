@@ -107,14 +107,14 @@ services:
     environment:
       - "ELASTIC_PASSWORD=${ELASTIC_PASSWORD}"
     volumes:
-      - "./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro"
+      - ./filebeat/:/usr/share/filebeat/:ro
       - filebeat:/usr/share/filebeat/data
-      - ${PRD_DB_LOGS_PATH}:/var/log/mysql"
-      - "/var/lib/docker/containers/:/var/lib/docker/containers/:ro"
-      - "/proc:/hostfs/proc:ro"
-      - "/sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro"
-      - "/:/hostfs:ro"
-      - "/var/run/docker.sock:/var/run/docker.sock"
+      - ${PRD_DB_LOGS_PATH}:/var/log/mysql
+      - /var/lib/docker/containers/:/var/lib/docker/containers/:ro
+      - /proc:/hostfs/proc:ro
+      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+      - /:/hostfs:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on: ["elasticsearch", "kibana"]
     networks:
       - mon-net
