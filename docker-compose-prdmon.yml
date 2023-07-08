@@ -97,6 +97,9 @@ services:
       - mon-net
 
   filebeat:
+    build:
+      context: ./filebeat
+      dockerfile: Dockerfile
     image: docker.elastic.co/beats/filebeat:${TAG}
     container_name: filebeat
     command: --strict.perms=false -e
@@ -107,7 +110,7 @@ services:
     environment:
       - "ELASTIC_PASSWORD=${ELASTIC_PASSWORD}"
     volumes:
-      - ./filebeat/:/usr/share/filebeat/:ro
+      #- ./filebeat/:/usr/share/filebeat/:ro
       - filebeat:/usr/share/filebeat/data
       - ${PRD_DB_LOGS_PATH}:/var/log/mysql
       - /var/lib/docker/containers/:/var/lib/docker/containers/:ro
